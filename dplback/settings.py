@@ -26,7 +26,7 @@ SECRET_KEY = '4t8-q7e4#*yx@q$!c4!c%^psz59*4wv=_c(yyx*yoslb#zpmd_'
 # DEBUG = False
 DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'zaqzxcswsde.ru'] #
+ALLOWED_HOSTS = ['localhost', 'zaqzxcswsde.ru'] #
 
 
 # Application definition
