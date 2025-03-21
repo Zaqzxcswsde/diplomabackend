@@ -163,3 +163,21 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
 import os
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+
+
+
+if DEBUG:
+    REST_FRAMEWORK = {
+        'DEFAULT_RENDERER_CLASSES': (
+            'rest_framework.renderers.JSONRenderer',
+            'rest_framework.renderers.BrowsableAPIRenderer',
+        ),
+        # Другие настройки DRF
+    }
+else:
+    REST_FRAMEWORK = {
+        'DEFAULT_RENDERER_CLASSES': (
+            'rest_framework.renderers.JSONRenderer',
+        ),
+        # Другие настройки DRF
+    }
