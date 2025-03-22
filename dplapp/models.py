@@ -29,6 +29,8 @@ import datetime
 from argon2 import PasswordHasher
 import argon2.exceptions
 
+from datetime import timedelta
+
 import ipaddress
 
 def ReturnTrue():
@@ -60,7 +62,7 @@ class UsersModel(models.Model):
             return False
         
 
-        if last_login and ((now_timestamp -  last_login) < activity_period):
+        if last_login and ((now_timestamp - last_login) < (activity_period+timedelta(seconds=1))):
             return False
 
 
