@@ -61,7 +61,7 @@ class UsersModel(models.Model):
         
 
         if last_login and ((now_timestamp -  last_login) < activity_period):
-            False
+            return False
 
 
         self.last_login = now_timestamp
