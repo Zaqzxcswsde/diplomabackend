@@ -64,13 +64,13 @@ class TicketSerializer(serializers.Serializer):
 
             decrypted_obj = decrypt_ticket_from_database(data)
 
-        except DecodeError as exc:
-            raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: f"incorrect JWT token passed"
-            }) from exc
         except InvalidSignatureError as exc:
             raise serializers.ValidationError({
                 api_settings.NON_FIELD_ERRORS_KEY: f"malformed JWT signature"
+            }) from exc
+        except DecodeError as exc:
+            raise serializers.ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: f"incorrect JWT token passed"
             }) from exc
         except InvalidToken as exc:
             raise serializers.ValidationError({
