@@ -334,11 +334,11 @@ class MainRequestSerializer(serializers.Serializer):
         claimed_payload['ip'] = ip_from_data
         validated_payload = super().to_internal_value(claimed_payload)
 
-        logger.warning("before2")
+        # logger.warning("before2")
 
         if ticket_data['ticket'] and TokensModel.objects.filter(pubkey = claimed_payload['public_key']).exists():
             serializer = TicketSerializer(data = ticket_data, context = {'claimed_pubkey': claimed_payload['public_key']})
-            logger.warning("before")
+            # logger.warning("before")
             if not serializer.is_valid():
                 raise serializers.ValidationError({
                     'ticket': serializer.errors
@@ -448,7 +448,7 @@ class MainRequestSerializer(serializers.Serializer):
     def validate_public_key(self, value):
 
 
-        logger.warning("asdf")
+        # logger.warning("asdf")
 
         token = None
         try:
