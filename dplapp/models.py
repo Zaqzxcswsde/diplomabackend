@@ -54,11 +54,13 @@ class UsersModel(models.Model):
                                                   
         token_timestamp = self.tokensmodel.last_activated.astimezone(datetime.timezone.utc)
 
+        last_login = self.last_login.astimezone(datetime.timezone.utc)
+
         if (now_timestamp - token_timestamp) > activity_period:
             return False
         
 
-        if self.last_login and ((now_timestamp -  self.last_login) < activity_period):
+        if last_login and ((now_timestamp -  last_login) < activity_period):
             False
 
 
