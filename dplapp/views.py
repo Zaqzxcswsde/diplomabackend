@@ -75,10 +75,6 @@ class MainRequestView(APIView):
             msg = "SUCCESS",
         )
 
-        if token.user:
-            token.user.last_login = timezone.now()
-            token.user.save()
-
         history_queryset = HistoryModel.objects.filter(token = token).order_by("-datetime")[:5]
 
         history_items = HistorySerializer(history_queryset, many = True)
