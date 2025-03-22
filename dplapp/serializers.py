@@ -91,12 +91,14 @@ class TicketSerializer(serializers.Serializer):
         return super().to_internal_value(decrypted_obj)
 
     def to_representation(self, instance):
-        try:
-            ticket = create_encrypted_ticket_from_database(instance)
-        except Exception as exc:
-            raise serializers.ValidationError({
-                    api_settings.NON_FIELD_ERRORS_KEY: f"unknown error in creating ticket"
-            }) from exc
+        # try:
+
+        ticket = create_encrypted_ticket_from_database(instance)
+        
+        # except Exception as exc:
+        #     raise serializers.ValidationError({
+        #             api_settings.NON_FIELD_ERRORS_KEY: f"unknown error in creating ticket"
+        #     }) from exc
         return {'ticket': ticket}
 
 
