@@ -40,7 +40,7 @@ class Command(BaseCommand):
             # "ticket_validity_period":   lambda: timedelta(days=3),
             "ticket_expiry_period":     lambda: timedelta(days=7),
             "enforcing_mode":           lambda: sett.ON,
-            "activity_period":          lambda: timedelta(seconds=40),
+            "activity_period":          lambda: timedelta(seconds=5),
             "admin_panel_token":        lambda: uuid.uuid4()
         }
 
