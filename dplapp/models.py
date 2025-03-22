@@ -169,7 +169,7 @@ class AppSettingsModel(models.Model):
         GRACEFUL: 'graceful',
         DEV: 'dev',
     }
-    enforcing_mode = models.CharField(max_length=2, choices=ENFORCING_MODES, default=OFF)
+    enforcing_mode = models.CharField(max_length=2, choices=ENFORCING_MODES)
 
     @property
     def validate_existing(self):
