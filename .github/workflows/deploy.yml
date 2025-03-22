@@ -25,4 +25,4 @@ jobs:
 
       - name: Deploy on VPS
         run: |
-          ssh -v -p 7834 user@zaqzxcswsde.ru "cd /home/user/dplfld/diplomabackend/ && sudo systemctl stop gunicorn.service && git pull && sudo systemctl start gunicorn.service"
+          ssh -p 7834 user@zaqzxcswsde.ru "cd /home/user/dplfld/diplomabackend/ && sudo systemctl stop gunicorn.service && git pull && sudo systemctl start gunicorn.service"
