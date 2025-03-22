@@ -12,6 +12,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Add VPS to known_hosts
+        run: |
+            mkdir -p ~/.ssh
+            ssh-keyscan -H zaqzxcswsde.ru >> ~/.ssh/known_hosts
+      
+
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
