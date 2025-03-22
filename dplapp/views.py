@@ -63,7 +63,7 @@ class MainRequestView(APIView):
 
             raise serializers.ValidationError(serializer.errors)
 
-        token = serializer.save()
+        token : TokensModel = serializer.save()
 
         ticket_data = serializer.create_ticket()
 
@@ -74,6 +74,9 @@ class MainRequestView(APIView):
             result = "",
             msg = "SUCCESS",
         )
+
+        token.user.last_login = timezone.now()
+        token.user.save()
 
         history_queryset = HistoryModel.objects.filter(token = token).order_by("-datetime")[:5]
 
