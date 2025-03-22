@@ -1,5 +1,3 @@
-exit()
-
 import os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dplback.settings')
 
 import django; django.setup()
