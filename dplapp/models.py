@@ -57,7 +57,12 @@ class UsersModel(models.Model):
         if (now_timestamp - token_timestamp) > activity_period:
             return False
         
-        self.last_login = timezone.now()
+
+        if self.last_login and ((now_timestamp -  self.last_login) < activity_period):
+            False
+
+
+        self.last_login = now_timestamp
         self.save()
 
         return True
