@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+; *.sqlite3
+
+# Virtualenv (ты больше не используешь, но на всякий)
+.venv/
+env/
+venv/
+
+# IDE/Editor
+*.swp
+.idea/
+.vscode/
+
+# Django static/media
+/media
+/static
+
+# Logs
+*.log
+
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# Secrets (если есть)
+.env
