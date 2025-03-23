@@ -1,3 +1,4 @@
+from time import sleep
 from django.shortcuts import render
 
 # Create your views here.
@@ -45,6 +46,7 @@ class MainRequestView(APIView):
 
     def post(self, request, format=None):
 
+        # sleep(3)
         # raise Exception
 
         client_ip, _ = get_client_ip(request)
