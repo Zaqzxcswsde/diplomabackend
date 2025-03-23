@@ -1,0 +1,58 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Add VPS to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 7834 -H zaqzxcswsde.ru >> ~/.ssh/known_hosts
+      
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy on VPS via Docker
+        run: |
+          ssh -p 7834 user@zaqzxcswsde.ru << 'EOF'
+            set -e  # Остановит скрипт при любой ошибке
+
+            cd /home/user/dplfld/diplomabackend/
+            git pull
+
+            echo "[INFO] Building Docker image..."
+            docker build -t diplomabackend .
+
+            echo "[INFO] Stopping and removing old container (if exists)..."
+            docker stop diplomabackend || true
+            docker rm diplomabackend || true
+
+            echo "[INFO] Running new container..."
+            docker run -d --name diplomabackend \
+              -p 127.0.0.1:8000:8000 \
+              -v /home/user/dplfld/diplomabackend/db.sqlite3:/app/db.sqlite3 \
+              diplomabackend
+
+            echo "[INFO] Waiting for container to start..."
+            sleep 5  # дать время контейнеру на старт
+
+            echo "[INFO] Checking container status..."
+            STATUS=$(docker inspect -f '{{.State.Status}}' diplomabackend)
+
+            if [ "$STATUS" = "running" ]; then
+              echo "[SUCCESS] Container is running."
+            else
+              echo "[ERROR] Container is NOT running. Status: $STATUS"
+              exit 1  # Завершить Action с ошибкой
+            fi
+          EOF
