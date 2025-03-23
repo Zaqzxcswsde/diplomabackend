@@ -55,4 +55,10 @@ jobs:
               echo "[ERROR] Container is NOT running. Status: $STATUS"
               exit 1  # Завершить Action с ошибкой
             fi
+
+            echo "[INFO] Running setup_app..."
+            docker exec diplomabackend python manage.py setup_app
+
+            echo "[SUCCESS] Deployment and setup_app completed."
+
           EOF
