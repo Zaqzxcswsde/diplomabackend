@@ -44,7 +44,7 @@ jobs:
               diplomabackend
 
             echo "[INFO] Waiting for container to start..."
-            sleep 5  # дать время контейнеру на старт
+            sleep 20  # дать время контейнеру на старт
 
             echo "[INFO] Checking container status..."
             STATUS=$(docker inspect -f '{{.State.Status}}' diplomabackend)
