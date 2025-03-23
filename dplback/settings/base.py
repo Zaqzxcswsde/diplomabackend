@@ -13,20 +13,20 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4t8-q7e4#*yx@q$!c4!c%^psz59*4wv=_c(yyx*yoslb#zpmd_'
+SECRET_KEY = '*b8yt-k$=*pib#d(n!ld3i=bnced3e_a9-wl%-_6xfgd4t#qv)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False
-DEBUG = False
+# DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'zaqzxcswsde.ru', '103.71.22.105'] #
+# ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -51,7 +51,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'dplapp.middleware.BlockPasswordChangeMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = 'dplback.urls'
 
@@ -121,6 +125,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+import os
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -148,36 +155,9 @@ LOGGING = {
     },
 }
 
+
+
 # custom settings
 
 APP_VERSION = "v0.0.5"
 ALLOWED_VERSIONS = ["v0.0.1", "v0.0.2", "v0.0.3", "v0.0.4"]
-
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_HSTS_SECONDS = 3600
-SECURE_HSTS_PRELOAD = False
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-
-import os
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-
-
-
-if DEBUG:
-    REST_FRAMEWORK = {
-        'DEFAULT_RENDERER_CLASSES': (
-            'rest_framework.renderers.JSONRenderer',
-            'rest_framework.renderers.BrowsableAPIRenderer',
-        ),
-        # Другие настройки DRF
-    }
-else:
-    REST_FRAMEWORK = {
-        'DEFAULT_RENDERER_CLASSES': (
-            'rest_framework.renderers.JSONRenderer',
-        ),
-        # Другие настройки DRF
-    }

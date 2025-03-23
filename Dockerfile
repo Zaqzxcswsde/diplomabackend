@@ -8,6 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем весь проект
 COPY . .
 
+ENV DJANGO_SETTINGS_MODULE=dplback.settings.prod
+
 # Собираем статику (если используется)
 RUN python manage.py collectstatic --noinput
 
