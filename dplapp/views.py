@@ -32,8 +32,6 @@ class HealthCheckView(APIView):
 
     def get(self, request, format=None):
 
-        raise Exception
-
         try:
             connection.ensure_connection()
             return Response({"status": "ok"}, status=200)
