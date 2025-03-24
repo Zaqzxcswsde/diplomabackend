@@ -68,12 +68,30 @@ jobs:
           "
 
 
+      - name: ENV validation
+        run: |
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
+            echo '[INFO] Validating environment (DJANGO_SETTINGS_MODULE)...'
+            ENV_MODE=\$(docker exec $CONTAINER_NAME printenv DJANGO_SETTINGS_MODULE)
+            echo \"[INFO] DJANGO_SETTINGS_MODULE=\$ENV_MODE\"
+
+            if [ \"\$ENV_MODE\" != \"dplback.settings.prod\" ]; then
+              echo '[ERROR] Server is NOT running in production mode!'
+              docker logs $CONTAINER_NAME --tail 50 || true
+              docker compose -f $DEPLOY_PATH/docker-compose.yml down || true
+              exit 1
+            else
+              echo '[SUCCESS] Server is running in production mode.'
+            fi
+          "
+
+
       - name: Health check
         run: |
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
             echo '[INFO] Performing health check...'
             HTTP_CODE=\$(curl -L -s -o /dev/null -w \"%{http_code}\" https://$SERVER_URL/health/)
-      
+            
             if [ \"\$HTTP_CODE\" -eq 200 ]; then
               echo '[SUCCESS] Health check passed.'
             else

@@ -2,6 +2,8 @@
 
 set -e
 
+# echo "[INFO] DJANGO_SETTINGS_MODULE is set to: $DJANGO_SETTINGS_MODULE"
+
 echo "[INFO] Applying migrations..."
 if ! python manage.py migrate; then
     echo "[ERROR] Migration failed!"
