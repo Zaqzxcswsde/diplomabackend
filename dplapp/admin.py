@@ -26,6 +26,9 @@ class TokenAdmin(admin.ModelAdmin):
 
 @admin.register(UsersModel)
 class UsersAdmin(admin.ModelAdmin):
+
+    readonly_fields = ['last_login']
+
     pass
 
 @admin.register(HistoryModel)
