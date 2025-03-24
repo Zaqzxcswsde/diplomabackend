@@ -24,7 +24,7 @@ Otherwise, run
    - `curl http://localhost:8000/health/` should give you `{"status":"ok"}`
 4. Stop the container after experimenting
    - `docker compose down`
-   - *(optional)* `docker rmi diplomabackend-diplomabackend` (if it errors out, run `docker images`, check for the `IMAGE ID` field and insert in place of `diplomabackend-diplomabackend` in the previous command
+   - *(optional)* `docker rmi diplomabackend-diplomabackend` (if it errors out, run `docker images`, check for the `IMAGE ID` field and insert in place of `diplomabackend-diplomabackend` in the previous command)
 ### On an actual production environment
 God help you.\
 No but actually, why would you do that?\
