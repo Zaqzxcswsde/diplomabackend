@@ -30,7 +30,7 @@ logger = logging.getLogger()
 
 class HealthCheckView(APIView):
 
-    def get(self, request, uid, format=None):
+    def get(self, request, format=None):
         try:
             connection.ensure_connection()
             return Response({"status": "ok"}, status=200)
