@@ -22,43 +22,33 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy on VPS via Docker
+      - name: Deploy on VPS via Docker Compose
         run: |
           ssh -p 7834 user@zaqzxcswsde.ru << 'EOF'
-            set -e  # Остановит скрипт при любой ошибке
+            set -e  # Остановить скрипт при любой ошибке
 
             cd /home/user/dplfld/diplomabackend/
             git pull
 
-            echo "[INFO] Building Docker image..."
-            docker build -t diplomabackend .
+            echo "[INFO] Stopping and removing old containers (if exists)..."
+            docker compose down || true
 
-            echo "[INFO] Stopping and removing old container (if exists)..."
-            docker stop diplomabackend || true
-            docker rm diplomabackend || true
+            echo "[INFO] Building Docker image via compose..."
+            docker compose build
 
-            echo "[INFO] Running new container..."
-            docker run -d --name diplomabackend \
-              -p 127.0.0.1:8000:8000 \
-              -v /home/user/dplfld/diplomabackend/db.sqlite3:/app/db.sqlite3 \
-              diplomabackend
+            echo "[INFO] Starting container with compose..."
+            docker compose up -d
 
             echo "[INFO] Waiting for container to start..."
-            sleep 5  # дать время контейнеру на старт
+            sleep 5
 
             echo "[INFO] Checking container status..."
             STATUS=$(docker inspect -f '{{.State.Status}}' diplomabackend)
 
             if [ "$STATUS" = "running" ]; then
-              echo "[SUCCESS] Container is running."
+              echo "[SUCCESS] Container is running and initialized."
             else
               echo "[ERROR] Container is NOT running. Status: $STATUS"
-              exit 1  # Завершить Action с ошибкой
+              exit 1
             fi
-
-            echo "[INFO] Running setup_app..."
-            docker exec diplomabackend python manage.py setup_app
-
-            echo "[SUCCESS] Deployment and setup_app completed."
-
           EOF
