@@ -27,6 +27,8 @@ jobs:
           ssh -p 7834 user@zaqzxcswsde.ru << 'EOF'
             set -e  # Остановить скрипт при любой ошибке
 
+            export DJANGO_SETTINGS_MODULE=dplback.settings.prod
+
             cd /home/user/dplfld/diplomabackend/
             git pull
 
@@ -37,7 +39,6 @@ jobs:
             docker compose build
 
             echo "[INFO] Starting container with compose..."
-            export DJANGO_SETTINGS_MODULE=dplback.settings.prod
             docker compose up -d
 
             echo "[INFO] Waiting for container to start..."
