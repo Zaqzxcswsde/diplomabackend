@@ -50,7 +50,10 @@ jobs:
 
       - name: Start container
         run: |
-          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "docker compose -f $DEPLOY_PATH/docker-compose.yml up -d"
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
+          export DJANGO_SETTINGS_MODULE=dplback.settings.prod
+          docker compose -f $DEPLOY_PATH/docker-compose.yml up -d
+          "
 
 
       - name: Check container status
@@ -77,7 +80,7 @@ jobs:
 
             if [ \"\$ENV_MODE\" != \"dplback.settings.prod\" ]; then
               echo '[ERROR] Server is NOT running in production mode!'
-              docker logs $CONTAINER_NAME --tail 50 || true
+              # docker logs $CONTAINER_NAME --tail 50 || true
               docker compose -f $DEPLOY_PATH/docker-compose.yml down || true
               exit 1
             else
@@ -91,7 +94,7 @@ jobs:
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
             echo '[INFO] Performing health check...'
             HTTP_CODE=\$(curl -L -s -o /dev/null -w \"%{http_code}\" https://$SERVER_URL/health/)
-            
+
             if [ \"\$HTTP_CODE\" -eq 200 ]; then
               echo '[SUCCESS] Health check passed.'
             else
