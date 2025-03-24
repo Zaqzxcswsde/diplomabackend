@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   diplomabackend:
@@ -9,3 +9,5 @@ services:
     volumes:
       - ./db.sqlite3:/app/db.sqlite3
     restart: always
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}

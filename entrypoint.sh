@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "[INFO] DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
+
 echo "[INFO] Applying migrations..."
 python manage.py migrate
 

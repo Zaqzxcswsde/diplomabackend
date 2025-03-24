@@ -37,6 +37,7 @@ jobs:
             docker compose build
 
             echo "[INFO] Starting container with compose..."
+            export DJANGO_SETTINGS_MODULE=dplback.settings.prod
             docker compose up -d
 
             echo "[INFO] Waiting for container to start..."
