@@ -1,12 +1,18 @@
 #!/bin/sh
 
-echo "[INFO] DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
+set -e
 
 echo "[INFO] Applying migrations..."
-python manage.py migrate
+if ! python manage.py migrate; then
+    echo "[ERROR] Migration failed!"
+    exit 1
+fi
 
 echo "[INFO] Running setup_app..."
-python manage.py setup_app
+if ! python manage.py setup_app; then
+    echo "[ERROR] setup_app failed!"
+    exit 1
+fi
 
 echo "[INFO] Starting Gunicorn..."
-gunicorn dplback.wsgi:application --bind 0.0.0.0:8000 --workers 3
+exec gunicorn dplback.wsgi:application --bind 0.0.0.0:8000 --workers 3

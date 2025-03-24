@@ -52,4 +52,16 @@ jobs:
               echo "[ERROR] Container is NOT running. Status: $STATUS"
               exit 1
             fi
+
+            echo "[INFO] Checking /health/ endpoint..."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/health/)
+
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              echo "[SUCCESS] Health check passed."
+            else
+              echo "[ERROR] Health check failed. Status code: $HTTP_CODE"
+              docker logs diplomabackend --tail 50
+              exit 1
+            fi
+
           EOF

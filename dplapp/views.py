@@ -23,8 +23,19 @@ from rest_framework import serializers
 
 from django.http import HttpResponseServerError
 
+from django.db import connection
+
 import logging
 logger = logging.getLogger()
+
+class HealthCheckView(APIView):
+
+    def get(self, request, uid, format=None):
+        try:
+            connection.ensure_connection()
+            return Response({"status": "ok"}, status=200)
+        except Exception as e:
+            return Response({"status": "error", "details": str(e)}, status=500)
 
 
 class CanLoginView(APIView):
