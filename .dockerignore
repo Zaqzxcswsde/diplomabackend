@@ -9,7 +9,7 @@ __pycache__
 *.pyo
 *.pyd
 *.db
-; *.sqlite3
+*.sqlite3
 
 # Virtualenv (ты больше не используешь, но на всякий)
 .venv/
@@ -34,3 +34,5 @@ docker-compose.yml
 
 # Secrets (если есть)
 .env
+
+testing_script.py
