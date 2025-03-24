@@ -68,15 +68,20 @@ jobs:
           "
 
 
-      - name: API health check
+      - name: Health check
         run: |
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
+            echo '[INFO] Performing health check...'
             HTTP_CODE=\$(curl -L -s -o /dev/null -w \"%{http_code}\" https://$SERVER_URL/health/)
+      
             if [ \"\$HTTP_CODE\" -eq 200 ]; then
               echo '[SUCCESS] Health check passed.'
             else
               echo '[ERROR] Health check failed. Code: \$HTTP_CODE'
-              docker logs $CONTAINER_NAME --tail 50
+              echo '[INFO] Container logs (diplomabackend):'
+              docker logs $CONTAINER_NAME --tail 50 || true
+              echo '[INFO] Stopping all services via docker compose down...'
+              docker compose -f $DEPLOY_PATH/docker-compose.yml down || true
               exit 1
             fi
           "
