@@ -28,5 +28,5 @@ Otherwise, run
 ### On an actual production environment
 God help you.\
 No but actually, why would you do that?\
-Anyway, check out the [deploy script](github/workflows/deploy.yml), it has a relatively sophisticated deployment logic.\
+Anyway, check out the [deploy script](.github/workflows/deploy.yml), it has a relatively sophisticated deployment logic.\
 As for the server infrastructure, I use nginx as a proxy (plus it handles https), and that's pretty much it.
