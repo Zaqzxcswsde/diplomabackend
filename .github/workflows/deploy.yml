@@ -5,6 +5,14 @@ on:
     branches:
       - main
 
+env:
+  SSH_PORT: ${{ secrets.SSH_PORT }}
+  SERVER_URL: ${{ vars.SERVER_URL }}
+  USERNAME: ${{ vars.USERNAME }}
+  DEPLOY_PATH: /home/user/dplfld/diplomabackend/
+  CONTAINER_NAME: diplomabackend
+
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,57 +20,63 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+
       - name: Add VPS to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ vars.SERVER_URL }} >> ~/.ssh/known_hosts
-      
+          ssh-keyscan -p $SSH_PORT -H $SERVER_URL >> ~/.ssh/known_hosts
+
+
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy on VPS via Docker Compose
+
+      - name: Pull latest code
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} ${{ vars.USERNAME }}@${{ vars.SERVER_URL }} << 'EOF'
-            set -e  # Остановить скрипт при любой ошибке
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "cd $DEPLOY_PATH && git pull"
 
-            export DJANGO_SETTINGS_MODULE=dplback.settings.prod
 
-            cd /home/user/dplfld/diplomabackend/
-            git pull
+      - name: Stop and remove container
+        run: |
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "docker compose -f $DEPLOY_PATH/docker-compose.yml down || true"
 
-            echo "[INFO] Stopping and removing old containers (if exists)..."
-            docker compose down || true
 
-            echo "[INFO] Building Docker image via compose..."
-            docker compose build
+      - name: Build Docker image
+        run: |
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "docker compose -f $DEPLOY_PATH/docker-compose.yml build"
 
-            echo "[INFO] Starting container with compose..."
-            docker compose up -d
 
-            echo "[INFO] Waiting for container to start..."
-            sleep 5
+      - name: Start container
+        run: |
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "docker compose -f $DEPLOY_PATH/docker-compose.yml up -d"
 
-            echo "[INFO] Checking container status..."
-            STATUS=$(docker inspect -f '{{.State.Status}}' diplomabackend)
 
-            if [ "$STATUS" = "running" ]; then
-              echo "[SUCCESS] Container is running and initialized."
+      - name: Check container status
+        run: |
+          sleep 5
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
+            STATUS=\$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME)
+            if [ \"\$STATUS\" = \"running\" ]; then
+              echo '[SUCCESS] Container is running and initialized.'
             else
-              echo "[ERROR] Container is NOT running. Status: $STATUS"
+              echo '[ERROR] Container is NOT running. Status: \$STATUS'
+              docker logs $CONTAINER_NAME --tail 50
               exit 1
             fi
+          "
 
-            echo "[INFO] Checking /health/ endpoint..."
-            HTTP_CODE=$(curl -L -s -o /dev/null -w "%{http_code}" https://${{ vars.SERVER_URL }}/health/)
 
-            if [ "$HTTP_CODE" -eq 200 ]; then
-              echo "[SUCCESS] Health check passed."
+      - name: API health check
+        run: |
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
+            HTTP_CODE=\$(curl -L -s -o /dev/null -w \"%{http_code}\" https://$SERVER_URL/health/)
+            if [ \"\$HTTP_CODE\" -eq 200 ]; then
+              echo '[SUCCESS] Health check passed.'
             else
-              echo "[ERROR] Health check failed. Status code: $HTTP_CODE"
-              docker logs diplomabackend --tail 50
+              echo '[ERROR] Health check failed. Code: \$HTTP_CODE'
+              docker logs $CONTAINER_NAME --tail 50
               exit 1
             fi
-
-          EOF
+          "
