@@ -35,6 +35,33 @@ logger = logging.getLogger()
 # logger.addHandler(consoleHandler)
 # logger.setLevel(logging.DEBUG)
 
+from datetime import timedelta
+import uuid
+
+def setup_app_logic(override=False):
+    save_keypair_to_database(override)
+    save_encryption_key_to_database(override)
+
+    sett = AppSettingsModel.objects.get_or_create()[0]
+
+    default_values = {
+        "ticket_expiry_period": lambda: timedelta(days=7),
+        "enforcing_mode":       lambda: sett.ON,
+        "activity_period":      lambda: timedelta(seconds=5),
+        "admin_panel_token":    lambda: uuid.uuid4()
+    }
+
+    for attr_name, def_value in default_values.items():
+        if override or not getattr(sett, attr_name):
+            setattr(sett, attr_name, def_value())
+            logger.info(f"Changed {attr_name}")
+        else:
+            logger.info(f"Not changing {attr_name}")
+
+    sett.save()
+
+
+
 def _generate_keypair():
     private_key =  ed25519.Ed25519PrivateKey.generate()
     public_key = private_key.public_key()

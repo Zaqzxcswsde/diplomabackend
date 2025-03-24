@@ -33,6 +33,8 @@ from datetime import timedelta
 
 import ipaddress
 
+from django.core.exceptions import ImproperlyConfigured
+
 def ReturnTrue():
     return True
 
@@ -161,7 +163,7 @@ class TokensModel(models.Model):
 class AppSettingsModel(models.Model):
     # ticket_validity_period = models.DurationField(blank=True, null=True) # when less than that time left before ticket expires, auto update the ticket
     ticket_expiry_period = models.DurationField(blank=True, null=True)
-    singleton_enforcer = models.CharField(max_length=1, unique=True, default='X', editable=False)
+    singleton_enforcer = models.CharField(max_length=1, unique=True, default='X', editable=False, choices={'X': 'X'})
     OFF = "of"; ON = "on"; GRACEFUL = "gr"; DEV = "dv"
     ENFORCING_MODES = {
         OFF: 'off',
@@ -169,7 +171,7 @@ class AppSettingsModel(models.Model):
         GRACEFUL: 'graceful',
         DEV: 'dev',
     }
-    enforcing_mode = models.CharField(max_length=2, choices=ENFORCING_MODES)
+    enforcing_mode = models.CharField(max_length=2, choices=ENFORCING_MODES, blank=True, null=True)
 
     @property
     def validate_existing(self):
@@ -178,7 +180,7 @@ class AppSettingsModel(models.Model):
         elif self.enforcing_mode in [self.OFF, self.DEV]:
             return False
         else:
-            raise TypeError(f"unexpected enforcing_mode value: {self.enforcing_mode}")
+            raise ImproperlyConfigured(f"unexpected enforcing_mode value: {self.enforcing_mode}, did you forget to run setup_app?")
 
     @property
     def allow_new(self):
@@ -187,7 +189,7 @@ class AppSettingsModel(models.Model):
         elif self.enforcing_mode in [self.ON, self.DEV]:
             return False
         else:
-            raise TypeError(f"unexpected enforcing_mode value: {self.enforcing_mode}")
+            raise ImproperlyConfigured(f"unexpected enforcing_mode value: {self.enforcing_mode}, did you forget to run setup_app?")
 
     activity_period = models.DurationField(blank=True, null=True)
     admin_panel_token = models.UUIDField(blank=True, null=True)
@@ -200,13 +202,13 @@ class AppSettingsModel(models.Model):
         self.full_clean()
         super(AppSettingsModel, self).save(*args, **kwargs)
 
-    # class Meta:
-    #     constraints = [
-    #         models.CheckConstraint(
-    #             condition=Q(ticket_validity_period__lt = models.F("ticket_expiry_period")) ,
-    #             name="ticket_validity_period__lt__ticket_expiry_period",
-    #         )
-    #     ]
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(activity_period__lt = models.F("ticket_expiry_period")) ,
+                name="activity_period__lt__ticket_expiry_period",
+            )
+        ]
 
     pass
 
