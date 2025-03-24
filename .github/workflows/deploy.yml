@@ -85,3 +85,8 @@ jobs:
               exit 1
             fi
           "
+
+
+      - name: Docker system prune
+        run: |
+          ssh -p $SSH_PORT $USERNAME@$SERVER_URL "docker system prune -f"
