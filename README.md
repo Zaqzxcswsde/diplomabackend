@@ -1,6 +1,6 @@
 # General informaiton
 ## What is this?
-A backend for my diploma, a two-factor authentication app (moblie + backend + PC admin client.
+A backend for my diploma, a two-factor authentication app (moblie + backend + PC admin client).
 ## Status
 It is still in development, I may or may not write a proper README (and publish the client!) once its finished.
 
