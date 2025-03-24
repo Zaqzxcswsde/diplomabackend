@@ -15,7 +15,7 @@ jobs:
       - name: Add VPS to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p 7834 -H zaqzxcswsde.ru >> ~/.ssh/known_hosts
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ vars.SERVER_URL }} >> ~/.ssh/known_hosts
       
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.5.3
@@ -24,7 +24,7 @@ jobs:
 
       - name: Deploy on VPS via Docker Compose
         run: |
-          ssh -p 7834 user@zaqzxcswsde.ru << 'EOF'
+          ssh -p ${{ secrets.SSH_PORT }} ${{ vars.USERNAME }}@${{ vars.SERVER_URL }} << 'EOF'
             set -e  # Остановить скрипт при любой ошибке
 
             export DJANGO_SETTINGS_MODULE=dplback.settings.prod
@@ -55,7 +55,7 @@ jobs:
             fi
 
             echo "[INFO] Checking /health/ endpoint..."
-            HTTP_CODE=$(curl -L -s -o /dev/null -w "%{http_code}" http://zaqzxcswsde.ru/health/)
+            HTTP_CODE=$(curl -L -s -o /dev/null -w "%{http_code}" https://${{ vars.SERVER_URL }}/health/)
 
             if [ "$HTTP_CODE" -eq 200 ]; then
               echo "[SUCCESS] Health check passed."
