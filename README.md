@@ -25,3 +25,8 @@ Otherwise, run
 4. Stop the container after experimenting
    - `docker compose down`
    - *(optional)* `docker rmi diplomabackend-diplomabackend` (if it errors out, run `docker images`, check for the `IMAGE ID` field and insert in place of `diplomabackend-diplomabackend` in the previous command
+### On an actual production environment
+God help you.\
+No but actually, why would you do that?\
+Anyway, check out the [deploy script](github/workflows/deploy.yml), it has a relatively sophisticated deployment logic.\
+As for the server infrastructure, I use nginx as a proxy (plus it handles https), and that's pretty much it.
