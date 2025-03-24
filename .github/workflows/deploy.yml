@@ -54,7 +54,7 @@ jobs:
             fi
 
             echo "[INFO] Checking /health/ endpoint..."
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/health/)
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://zaqzxcswsde.ru/health/)
 
             if [ "$HTTP_CODE" -eq 200 ]; then
               echo "[SUCCESS] Health check passed."
