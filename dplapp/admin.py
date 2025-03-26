@@ -6,6 +6,8 @@ from dplapp.models import TokensModel, UsersModel, AppSettingsModel, HistoryMode
 
 from dplapp.utils import setup_app_logic
 
+from uuid import uuid4
+
 # @admin.display(description="Str")
 # def get_str(obj):
 #     return str(obj)
@@ -48,7 +50,7 @@ class SettingsAdmin(admin.ModelAdmin):
 
     fields = ['ticket_expiry_period', 'enforcing_mode', 'activity_period', 'public_key'] # , 'admin_panel_token'
     readonly_fields = ['public_key'] # , 'admin_panel_token'
-    actions = ['run_setup_app']
+    actions = ['run_setup_app', 'run_flush_admin_token']
 
     def has_add_permission(self, request):
         # Разрешить добавление только если в таблице ещё нет записи
@@ -63,6 +65,18 @@ class SettingsAdmin(admin.ModelAdmin):
             self.message_user(request, "Настройки успешно применены!", level=messages.SUCCESS)
         except Exception as e:
             self.message_user(request, f"Ошибка при выполнении: {e}", level=messages.ERROR)
+
+
+    def run_flush_admin_token(self, request, queryset):
+        try:
+            sett = AppSettingsModel.objects.get()
+            sett.admin_panel_token = uuid4()
+            sett.save()
+            # setup_app_logic(override=False)
+            self.message_user(request, "Токен успешно сброшен!", level=messages.SUCCESS)
+        except Exception as e:
+            self.message_user(request, f"Ошибка при выполнении: {e}", level=messages.ERROR)
+
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
