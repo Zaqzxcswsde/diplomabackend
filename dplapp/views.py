@@ -3,6 +3,7 @@ from django.shortcuts import render
 
 # Create your views here.
 
+from rest_framework import mixins
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,7 +12,7 @@ from dplapp.serializers import MainRequestSerializer, HistorySerializer
 
 from ipware import get_client_ip
 
-from dplapp.models import TokensModel, HistoryModel, UsersModel
+from dplapp.models import TokensModel, HistoryModel, UsersModel, AppSettingsModel
 
 from argon2 import PasswordHasher
 
@@ -23,19 +24,142 @@ from rest_framework import serializers
 
 from django.http import HttpResponseServerError
 
+from dplapp.serializers import TokenSerializer
+
 from django.db import connection
+
+import django_filters.rest_framework as filters
+
+from dplapp.permissions import HasAdminPanelToken
 
 import logging
 logger = logging.getLogger()
+
+from rest_framework import viewsets
+
+from rest_framework.decorators import action
+
+from rest_framework import status
+
+from django.core.exceptions import ObjectDoesNotExist
+
+
+class UpdateEnforcingModeView(APIView):
+
+    permission_classes = [HasAdminPanelToken]  # опционально
+
+    def get(self, request):
+        settings_obj = AppSettingsModel.objects.get()
+        return Response({"enforcing_mode": settings_obj.enforcing_mode})
+
+
+    def post(self, request):
+        mode = request.data.get('enforcing_mode')
+
+        allowed_modes = ['of', 'on', 'gr']
+        if mode not in allowed_modes:
+            return Response(
+                {"error": f"Invalid enforcing_mode. Allowed: {allowed_modes}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            settings_obj = AppSettingsModel.objects.get()
+            settings_obj.enforcing_mode = mode
+            settings_obj.save()
+        except ObjectDoesNotExist:
+            return Response(
+                {"error": f"Settings not configured. Run setup_app!"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({"enforcing_mode": settings_obj.enforcing_mode}, status=200)
+
+
+
+
+
+
+
+
+
+class TokenFilter(filters.FilterSet):
+    class Meta:
+        model = TokensModel
+        fields = {
+            'is_active': ['exact'],
+            'last_activated': ['lt', 'gt', 'exact'],
+        }
+
+class TokenViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet
+):
+    queryset = TokensModel.objects.all()
+    serializer_class = TokenSerializer
+    filterset_class = TokenFilter
+    http_method_names = ['get', 'patch', 'head', 'options', 'post']
+    permission_classes = [HasAdminPanelToken]
+
+
+    @action(detail=False, methods=['post'], url_path='bulk-activate')
+    def bulk_activate(self, request):
+        ids = request.data.get('ids')
+        new_value = request.data.get('is_active')
+
+        if not isinstance(ids, list) or not isinstance(new_value, bool):
+            return Response(
+                {'error': 'Expected "ids": [..] and "is_active": true/false'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        existing_ids = set(TokensModel.objects.filter(id__in=ids).values_list('id', flat=True))
+        requested_ids = set(ids)
+
+        missing_ids = requested_ids - existing_ids
+        if missing_ids:
+            return Response(
+                {'error': f'Tokens with the following IDs were not found: {list(missing_ids)}'},
+                status=400
+            )
+
+        tokens = TokensModel.objects.filter(id__in=ids)
+        to_update = [t.id for t in tokens if t.is_active != new_value]
+
+        TokensModel.objects.filter(id__in=to_update).update(is_active=new_value)
+        updated = len(to_update)
+
+        return Response({'updated': updated}, status=200)
+
+
+    # def update(self, request, *args, **kwargs):
+    #     # Полный PUT-запрос — запрещён
+    #     return Response({"detail": "PUT-запросы не поддерживаются."}, status=405)
+
+# class ChangeEnforsingModeView(APIView):
+#     def post(self, request, format=None):
+#         request.data
+#         pass
 
 class HealthCheckView(APIView):
 
     def get(self, request, format=None):
 
+        err_details = None
+
         try:
             connection.ensure_connection()
-            return Response({"status": "ok"}, status=200)
         except Exception as e:
+            err_details = e
+        
+        if not (AppSettingsModel.objects.get_or_create()[0].public_key and AppSettingsModel.objects.get_or_create()[0].enforcing_mode):
+            err_details = "No settings found, run setup_app"
+
+        if not err_details:
+            return Response({"status": "ok"}, status=200)
+        else:
             return Response({"status": "error", "details": str(e)}, status=500)
 
 

@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = '*b8yt-k$=*pib#d(n!ld3i=bnced3e_a9-wl%-_6xfgd4t#qv)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = False
+DEBUG = False
 # DEBUG = True
 
 # ALLOWED_HOSTS = ['*']
@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'django_extensions'
+    'django_extensions',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
@@ -155,6 +156,12 @@ LOGGING = {
     },
 }
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ]
+}
 
 
 # custom settings

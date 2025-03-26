@@ -1,11 +1,19 @@
 # file for apps urls 
 
-from django.urls import path
+from django.urls import path, include
+
+from rest_framework.routers import DefaultRouter
 
 from dplapp import views
 
+router = DefaultRouter()
+router.register(r'tokens', views.TokenViewSet, basename='token')
+
 urlpatterns = [
-    path('mainrequest', views.MainRequestView.as_view()),
+    path('mainrequest/', views.MainRequestView.as_view()),
     path('canlogin/<uuid:uid>', views.CanLoginView.as_view()),
     path('health/', views.HealthCheckView.as_view()),
+    path('enforcing-mode/', views.UpdateEnforcingModeView.as_view())
 ]
+
+urlpatterns += router.urls

@@ -12,8 +12,8 @@ SECURE_HSTS_SECONDS = 3600
 SECURE_HSTS_PRELOAD = False
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
-REST_FRAMEWORK = {
+REST_FRAMEWORK.update({
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
-}
+})

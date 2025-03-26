@@ -23,6 +23,19 @@ from argon2 import PasswordHasher
 import argon2.exceptions
 
 
+class TokenSerializer(serializers.ModelSerializer):
+
+    fingerprint = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TokensModel
+        fields = '__all__'
+        read_only_fields = ['pubkey', 'pin', 'last_activated']
+
+    def get_fingerprint(self, obj):
+        return obj.fingerprint
+
+
 class UTCDateTimeField(serializers.DateTimeField):
     def to_representation(self, value):
         if value is not None:
