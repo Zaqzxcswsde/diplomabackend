@@ -17,3 +17,6 @@ REST_FRAMEWORK.update({
         'rest_framework.renderers.JSONRenderer',
     ),
 })
+
+import logging
+logging.getLogger().setLevel(logging.WARNING)
