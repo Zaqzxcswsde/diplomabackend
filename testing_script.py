@@ -220,47 +220,49 @@ import hashlib
 
 # --- Эмуляция клиента ---
 
-private_key =  rsa.generate_private_key(key_size=2048, public_exponent=65537)
-public_key = private_key.public_key()
+for _ in range(10):
 
-private_bytes = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        ).decode()
-private_bytes = re.sub(r'(\r\n)|\n', '', private_bytes)
+    private_key =  rsa.generate_private_key(key_size=2048, public_exponent=65537)
+    public_key = private_key.public_key()
 
-
-public_bytes = public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        ).decode()
-public_bytes = re.sub(r'(\r\n)|\n', '', public_bytes)
-
-fingerprint = ' '.join(f'{byte:02X}' for byte in hashlib.sha256(public_bytes.encode('utf-8')).digest()[:6])
+    private_bytes = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            ).decode()
+    private_bytes = re.sub(r'(\r\n)|\n', '', private_bytes)
 
 
-jwt_dict = {
-    "version": "v0.0.5",
-    "request_time": timezone.now().isoformat(),
-    "public_key": public_bytes,
-    "pin": hashlib.sha256(f"1234567890{fingerprint}".encode('utf-8')).hexdigest(),
-    "ticket": ""
-}
+    public_bytes = public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            ).decode()
+    public_bytes = re.sub(r'(\r\n)|\n', '', public_bytes)
 
-tkn = jwt.encode(jwt_dict, private_key, algorithm="RS256")
+    fingerprint = ' '.join(f'{byte:02X}' for byte in hashlib.sha256(public_bytes.encode('utf-8')).digest()[:6])
 
-import requests
 
-url = "http://127.0.0.1:8000/mainrequest/"
-data = {
-    'token': tkn,
-}
+    jwt_dict = {
+        "version": "v0.0.5",
+        "request_time": timezone.now().isoformat(),
+        "public_key": public_bytes,
+        "pin": hashlib.sha256(f"1234567890{fingerprint}".encode('utf-8')).hexdigest(),
+        "ticket": ""
+    }
 
-response = requests.post(url, json=data)
+    tkn = jwt.encode(jwt_dict, private_key, algorithm="RS256")
 
-print(response.status_code)
-print(response.json())  # если сервер возвращает JSON
+    import requests
+
+    url = "http://127.0.0.1:8000/mainrequest/"
+    data = {
+        'token': tkn,
+    }
+
+    response = requests.post(url, json=data)
+
+    print(response.status_code)
+    print(response.json())  # если сервер возвращает JSON
 
 
 exit()

@@ -97,7 +97,7 @@ class TokenViewSet(
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = TokensModel.objects.all()
+    queryset = TokensModel.objects.all().order_by('pk')
     serializer_class = TokenSerializer
     filterset_class = TokenFilter
     http_method_names = ['get', 'patch', 'head', 'options', 'post']
