@@ -8,6 +8,10 @@ from dplapp.utils import setup_app_logic
 
 from uuid import uuid4
 
+from django.urls import reverse
+
+from django.utils.html import format_html
+
 # @admin.display(description="Str")
 # def get_str(obj):
 #     return str(obj)
@@ -30,6 +34,14 @@ class TokenAdmin(admin.ModelAdmin):
 class UsersAdmin(admin.ModelAdmin):
 
     readonly_fields = ['last_login']
+    readonly_fields = ['last_login', 'linked_token']
+
+    def linked_token(self, obj):
+        if hasattr(obj, "tokensmodel"):
+            url = reverse("admin:dplapp_tokensmodel_change", args=[obj.tokensmodel.id])
+            return format_html('<a href="{}">{}</a>', url, obj.tokensmodel.fingerprint)
+        return "-"
+
 
     pass
 

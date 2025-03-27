@@ -220,7 +220,7 @@ import hashlib
 
 # --- Эмуляция клиента ---
 
-for _ in range(10):
+for _ in range(15):
 
     private_key =  rsa.generate_private_key(key_size=2048, public_exponent=65537)
     public_key = private_key.public_key()

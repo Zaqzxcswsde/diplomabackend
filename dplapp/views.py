@@ -41,8 +41,11 @@ from rest_framework.decorators import action
 
 from rest_framework import status
 
+from rest_framework import filters as drf_filters
+
 from django.core.exceptions import ObjectDoesNotExist
 
+import django_filters
 
 class UpdateEnforcingModeView(APIView):
 
@@ -84,6 +87,13 @@ class UpdateEnforcingModeView(APIView):
 
 
 class TokenFilter(filters.FilterSet):
+    has_user = django_filters.BooleanFilter(
+        field_name='user',
+        lookup_expr='isnull',
+        exclude=True  # инвертирует: True → isnull=False (есть пользователь)
+    )
+
+
     class Meta:
         model = TokensModel
         fields = {
@@ -95,14 +105,23 @@ class TokenViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
+    # mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = TokensModel.objects.all().order_by('pk')
+    queryset = TokensModel.objects.all()
     serializer_class = TokenSerializer
     filterset_class = TokenFilter
-    http_method_names = ['get', 'patch', 'head', 'options', 'post']
+    http_method_names = ['get', 'patch', 'head', 'options', 'post', 'delete']
     permission_classes = [HasAdminPanelToken]
 
+    filter_backends = [
+        django_filters.rest_framework.DjangoFilterBackend,
+        drf_filters.SearchFilter,
+        drf_filters.OrderingFilter,
+    ]
+    search_fields = ['id', 'pubkey', 'user__uuid', 'user__additional_data']
+    ordering_fields = ['last_activated', 'id']
+    ordering = ['-id']
 
     @action(detail=False, methods=['post'], url_path='bulk-activate')
     def bulk_activate(self, request):
@@ -132,6 +151,28 @@ class TokenViewSet(
         updated = len(to_update)
 
         return Response({'updated': updated}, status=200)
+
+
+    @action(detail=False, methods=['delete'], url_path='delete-inactive')
+    def delete_inactive(self, request):
+        query = TokensModel.objects.filter(is_active=False)
+        deleted_count = query.count()
+        query.delete()
+        return Response({'deleted': deleted_count}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['delete'], url_path='delete-unlinked')
+    def delete_unlinked(self, request):
+        query = TokensModel.objects.filter(user__isnull=True)
+        deleted_count = query.count()
+        query.delete()
+        return Response({'deleted': deleted_count}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='count')
+    def count_tokens(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        count = queryset.count()
+        return Response({'count': count}, status=status.HTTP_200_OK)
+
 
 
     # def update(self, request, *args, **kwargs):

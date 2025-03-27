@@ -14,6 +14,8 @@ from dplapp.models import TokensModel, AppSettingsModel, HistoryModel
 
 import jwt
 
+import json
+
 import logging
 logger = logging.getLogger()
 
@@ -25,15 +27,22 @@ import argon2.exceptions
 
 class TokenSerializer(serializers.ModelSerializer):
 
+    # user_uuid = serializers.UUIDField(source='user.uuid', read_only=True)
     fingerprint = serializers.SerializerMethodField()
+    user_additional_info = serializers.SerializerMethodField()
 
     class Meta:
         model = TokensModel
         fields = '__all__'
-        read_only_fields = ['pubkey', 'pin', 'last_activated']
+        read_only_fields = ['pubkey', 'pin', 'last_activated', 'user_uuid', 'user_additional_info']
 
     def get_fingerprint(self, obj):
         return obj.fingerprint
+    
+    def get_user_additional_info(self, obj):
+        if obj.user and obj.user.additional_data:
+            return json.dumps(obj.user.additional_data, ensure_ascii=False)
+        return None
 
 
 class UTCDateTimeField(serializers.DateTimeField):
