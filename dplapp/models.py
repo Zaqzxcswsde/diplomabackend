@@ -38,6 +38,8 @@ from django.core.exceptions import ImproperlyConfigured
 def ReturnTrue():
     return True
 
+def ReturnFalse():
+    return True
 
 class UsersModel(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -55,10 +57,12 @@ class UsersModel(models.Model):
         activity_period = AppSettingsModel.objects.get_or_create()[0].activity_period
 
         now_timestamp = timezone.now().astimezone(datetime.timezone.utc)
-                                                  
+
         token_timestamp = self.tokensmodel.last_activated.astimezone(datetime.timezone.utc)
 
-        last_login = self.last_login.astimezone(datetime.timezone.utc)
+        last_login = self.last_login
+        if last_login:
+            last_login = last_login.astimezone(datetime.timezone.utc)
 
         if (now_timestamp - token_timestamp) > activity_period:
             return False
@@ -119,6 +123,7 @@ class TokensModel(models.Model):
 
     pubkey = models.TextField(unique=True, validators=[validate_public_key])
     is_active = models.BooleanField(default=ReturnTrue)
+    can_reset_password = models.BooleanField(default=ReturnFalse)
     last_activated = models.DateTimeField(blank=True, null=True)
     user = models.OneToOneField(UsersModel, on_delete=models.SET_NULL, null=True, blank=True)
     pin = models.TextField()

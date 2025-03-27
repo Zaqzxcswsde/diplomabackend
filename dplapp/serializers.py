@@ -423,17 +423,20 @@ class MainRequestSerializer(serializers.Serializer):
                 })
 
 
-        if token and sett.validate_existing:
-
-            ph = PasswordHasher()
-
-            try:
-                ph.verify(token.pin, data['pin'])
-            except argon2.exceptions.VerifyMismatchError as exc:
-                raise serializers.ValidationError({
-                    'pin': f"pin is invalid"
-                }) from exc
-
+        if token:
+            if token.can_reset_password:
+                token.pin = PasswordHasher().hash(data['pin'])
+                token.can_reset_password = False
+                token.save()
+            else:
+                if sett.validate_existing:
+                    ph = PasswordHasher()
+                    try:
+                        ph.verify(token.pin, data['pin'])
+                    except argon2.exceptions.VerifyMismatchError as exc:
+                        raise serializers.ValidationError({
+                            'pin': f"pin is invalid"
+                        }) from exc
 
         return data
 
