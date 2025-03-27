@@ -149,12 +149,19 @@ LOGGING = {
             "formatter": "verbose"
         },
     },
-
+    "loggers": {
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
     "root": {
         "handlers": ["console"],
         "level": "DEBUG",
     },
 }
+
 
 
 REST_FRAMEWORK = {

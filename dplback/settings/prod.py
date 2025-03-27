@@ -19,4 +19,9 @@ REST_FRAMEWORK.update({
 })
 
 import logging
-logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger().setLevel(logging.INFO)
+
+LOGGING['root'] = {
+        "handlers": ["console"],
+        "level": "INFO",
+    }

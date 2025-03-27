@@ -17,4 +17,9 @@ if ! python manage.py setup_app; then
 fi
 
 echo "[INFO] Starting Gunicorn..."
-exec gunicorn dplback.wsgi:application --bind 0.0.0.0:8000 --workers 3
+exec gunicorn dplback.wsgi:application \
+--bind 0.0.0.0:8000 \
+--workers 3 \
+--log-level info \
+--access-logfile '-' \
+--error-logfile '-'
