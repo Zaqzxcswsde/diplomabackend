@@ -10,7 +10,7 @@ from jwt.exceptions import InvalidSignatureError, DecodeError
 from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.utils import timezone
 from datetime import timedelta
-from dplapp.models import TokensModel, AppSettingsModel, HistoryModel
+from dplapp.models import TokensModel, AppSettingsModel, HistoryModel, UsersModel
 
 import jwt
 
@@ -24,25 +24,72 @@ import datetime
 from argon2 import PasswordHasher
 import argon2.exceptions
 
+from django.db import transaction
+
+
 
 class TokenSerializer(serializers.ModelSerializer):
 
     # user_uuid = serializers.UUIDField(source='user.uuid', read_only=True)
     fingerprint = serializers.SerializerMethodField()
-    user_additional_info = serializers.SerializerMethodField()
+    # user_additional_info = serializers.Te SerializerMethodField()
+    user_additional_data = serializers.CharField(required=False, allow_blank=True) # , allow_null=True
+
+    user = serializers.PrimaryKeyRelatedField(queryset=UsersModel.objects.all(), required=False)
 
     class Meta:
         model = TokensModel
         fields = '__all__'
-        read_only_fields = ['pubkey', 'pin', 'last_activated', 'user_uuid', 'user_additional_info']
+        read_only_fields = ['pubkey', 'pin', 'last_activated'] # 'user_additional_data'
 
     def get_fingerprint(self, obj):
         return obj.fingerprint
     
-    def get_user_additional_info(self, obj):
-        if obj.user and obj.user.additional_data:
-            return json.dumps(obj.user.additional_data, ensure_ascii=False)
-        return None
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        
+        rep['user_additional_data'] = (
+            instance.user.additional_data if instance.user and instance.user.additional_data else ""
+        )
+        return rep
+
+
+    def update(self, instance, validated_data: dict):
+        new_info = validated_data.pop('user_additional_data', None)
+        new_user = validated_data.get('user', None)
+
+
+        with transaction.atomic():
+
+            if new_user is not None and new_user != instance.user:
+                TokensModel.objects.filter(user = new_user).update(user = None)
+
+            old_user = instance.user
+            instance = super().update(instance, validated_data)
+
+            if new_info is not None and old_user == instance.user:
+                instance.user.additional_data = new_info
+                instance.user.save(update_fields=['additional_data'])
+                instance.user.refresh_from_db(fields=['additional_data'])
+
+            # old_user = instance.user
+
+
+        return instance
+
+    # def validate_user(self, value):
+    #     instance = getattr(self, 'instance', None)
+
+    #     if instance and TokensModel.objects.filter(user=value).exclude(id=instance.id).exists():
+    #         return value
+
+    #     return value
+
+    # def get_user_additional_info(self, obj):
+    #     if obj.user and obj.user.additional_data:
+    #         return json.dumps(obj.user.additional_data, ensure_ascii=False)
+        # return None
 
 
 class UTCDateTimeField(serializers.DateTimeField):
