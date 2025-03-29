@@ -61,7 +61,10 @@ class UserFilter(django_filters.FilterSet):
         }
 
 
-class UserViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+class UserViewSet(mixins.ListModelMixin,
+                  mixins.CreateModelMixin,
+                  mixins.DestroyModelMixin,
+                  viewsets.GenericViewSet):
     queryset = UsersModel.objects.all()
     serializer_class = UserSerializer
     filterset_class = UserFilter
@@ -295,7 +298,7 @@ class MainRequestView(APIView):
                 token = TokensModel.objects.filter(pubkey = serializer.context.get('public_key', None)).first(),
                 initial_data = serializer.initial_data,
                 ip = client_ip,
-                result = {k:[str(x) for x in v]  for k,v in serializer.errors.items()},
+                result = {k:[str(x) for x in v] for k,v in serializer.errors.items()},
                 msg = "ERR",
             )
 

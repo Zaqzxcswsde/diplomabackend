@@ -95,7 +95,7 @@ class TokensModel(models.Model):
 
     def validate_ips(value: str):
 
-        value = value.replace(' ', '').split(',')
+        value = list(set(value.replace(' ', '').split(',')))
 
         for ipaddr in value:
             is_ip = True

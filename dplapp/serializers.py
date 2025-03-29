@@ -44,6 +44,8 @@ class TokenSerializer(serializers.ModelSerializer):
 
     user = serializers.PrimaryKeyRelatedField(queryset=UsersModel.objects.all(), required=False, allow_null = True)
 
+    user_last_login = serializers.DateTimeField(source = "user.last_login", read_only=True)
+
     class Meta:
         model = TokensModel
         fields = '__all__'
@@ -52,9 +54,12 @@ class TokenSerializer(serializers.ModelSerializer):
     def get_fingerprint(self, obj):
         return obj.fingerprint
 
-    def to_internal_value(self, data):
+    def to_internal_value(self, data : dict[str, str]):
 
         self.context['is_user_null'] = data.get('user', None) is None
+
+        if data.get("allowed_ips", None):
+            data["allowed_ips"] = ','.join(x for x in dict.fromkeys(data["allowed_ips"].replace(" ", "").split(',')) if x != "")
 
         return super().to_internal_value(data)
 
