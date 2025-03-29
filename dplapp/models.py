@@ -41,6 +41,9 @@ def ReturnTrue():
 def ReturnFalse():
     return True
 
+def ReturnEmptyString():
+    return ""
+
 class UsersModel(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     additional_data = models.TextField(blank=True, default="")
@@ -127,7 +130,7 @@ class TokensModel(models.Model):
     last_activated = models.DateTimeField(blank=True, null=True)
     user = models.OneToOneField(UsersModel, on_delete=models.SET_NULL, null=True, blank=True)
     pin = models.TextField()
-    allowed_ips = models.TextField(blank=True, null=True, validators=[validate_ips])
+    allowed_ips = models.TextField(blank=True, validators=[validate_ips], default=ReturnEmptyString)
     # pin_salt = models.TextField()
 
 
