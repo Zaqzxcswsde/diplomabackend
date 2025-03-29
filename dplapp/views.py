@@ -24,7 +24,7 @@ from rest_framework import serializers
 
 from django.http import HttpResponseServerError
 
-from dplapp.serializers import TokenSerializer
+from dplapp.serializers import TokenSerializer, FullHistorySerializer, UserSerializer
 
 from django.db import connection
 
@@ -47,9 +47,69 @@ from django.core.exceptions import ObjectDoesNotExist
 
 import django_filters
 
+
+class UserFilter(django_filters.FilterSet):
+    has_token = django_filters.BooleanFilter(
+        field_name='tokensmodel',
+        lookup_expr='isnull',
+        exclude=True
+    )
+    class Meta:
+        model = UsersModel
+        fields = {
+            'last_login': ['lt', 'gt', 'exact']
+        }
+
+
+class UserViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = UsersModel.objects.all()
+    serializer_class = UserSerializer
+    filterset_class = UserFilter
+    permission_classes = [HasAdminPanelToken]
+
+    filter_backends = [
+        django_filters.rest_framework.DjangoFilterBackend,
+        drf_filters.SearchFilter,
+        drf_filters.OrderingFilter,
+    ]
+
+    ordering_fields = ['uuid, lastlogin']
+    ordering = ['-uuid']
+    search_fields = ['additional_data', 'tokensmodel__pubkey']
+
+
+class HistoryFilter(django_filters.FilterSet):
+    class Meta:
+        model = HistoryModel
+        fields = {
+            'token': ['exact'],
+            'datetime': ['lt', 'gt', 'exact'],
+            'msg': ['exact'],
+            'ip': ['exact']
+        }
+
+
+class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    queryset = HistoryModel.objects.all()
+    serializer_class = FullHistorySerializer
+    filterset_class = HistoryFilter
+    permission_classes = [HasAdminPanelToken]
+
+    filter_backends = [
+        django_filters.rest_framework.DjangoFilterBackend,
+        drf_filters.SearchFilter,
+        drf_filters.OrderingFilter,
+    ]
+    ordering_fields = ['datetime']
+    ordering = ['-datetime']
+    search_fields = ['result', 'ip', 'token__user__additional_data']
+
+
+
+
 class UpdateEnforcingModeView(APIView):
 
-    permission_classes = [HasAdminPanelToken]  # опционально
+    permission_classes = [HasAdminPanelToken]
 
     def get(self, request):
         settings_obj = AppSettingsModel.objects.get()
@@ -90,9 +150,8 @@ class TokenFilter(filters.FilterSet):
     has_user = django_filters.BooleanFilter(
         field_name='user',
         lookup_expr='isnull',
-        exclude=True  # инвертирует: True → isnull=False (есть пользователь)
+        exclude=True 
     )
-
 
     class Meta:
         model = TokensModel
@@ -236,7 +295,7 @@ class MainRequestView(APIView):
                 token = TokensModel.objects.filter(pubkey = serializer.context.get('public_key', None)).first(),
                 initial_data = serializer.initial_data,
                 ip = client_ip,
-                result = serializer.errors,
+                result = {k:[str(x) for x in v]  for k,v in serializer.errors.items()},
                 msg = "ERR",
             )
 

@@ -8,6 +8,8 @@ from dplapp import views
 
 router = SimpleRouter()
 router.register(r'tokens', views.TokenViewSet, basename='token')
+router.register(r'history', views.HistoryViewSet, basename='history')
+router.register(r'users', views.UserViewSet, basename='user')
 
 urlpatterns = [
     path('mainrequest/', views.MainRequestView.as_view()),

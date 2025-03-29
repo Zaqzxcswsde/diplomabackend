@@ -27,6 +27,13 @@ import argon2.exceptions
 from django.db import transaction
 
 
+class UserSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(source='tokensmodel.pk', read_only=True)
+
+    class Meta:
+        model = UsersModel
+        fields = '__all__'
+
 
 class TokenSerializer(serializers.ModelSerializer):
 
@@ -35,7 +42,7 @@ class TokenSerializer(serializers.ModelSerializer):
     # user_additional_info = serializers.Te SerializerMethodField()
     user_additional_data = serializers.CharField(required=False, allow_blank=True) # , allow_null=True
 
-    user = serializers.PrimaryKeyRelatedField(queryset=UsersModel.objects.all(), required=False)
+    user = serializers.PrimaryKeyRelatedField(queryset=UsersModel.objects.all(), required=False, allow_null = True)
 
     class Meta:
         model = TokensModel
@@ -44,7 +51,13 @@ class TokenSerializer(serializers.ModelSerializer):
 
     def get_fingerprint(self, obj):
         return obj.fingerprint
-    
+
+    def to_internal_value(self, data):
+
+        self.context['is_user_null'] = data.get('user', None) is None
+
+        return super().to_internal_value(data)
+
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -58,6 +71,9 @@ class TokenSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data: dict):
         new_info = validated_data.pop('user_additional_data', None)
         new_user = validated_data.get('user', None)
+        if self.context['is_user_null']:
+            validated_data.pop('user', None)
+            # new_user = instance.user
 
 
         with transaction.atomic():
@@ -68,7 +84,9 @@ class TokenSerializer(serializers.ModelSerializer):
             old_user = instance.user
             instance = super().update(instance, validated_data)
 
-            if new_info is not None and old_user == instance.user:
+            if (new_info is not None and
+                old_user is not None and
+                old_user == instance.user):
                 instance.user.additional_data = new_info
                 instance.user.save(update_fields=['additional_data'])
                 instance.user.refresh_from_db(fields=['additional_data'])
@@ -106,6 +124,14 @@ class HistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = HistoryModel
         fields = ['datetime', 'ip', 'msg']
+
+class FullHistorySerializer(serializers.ModelSerializer):
+    datetime = UTCDateTimeField()
+
+    class Meta:
+        model = HistoryModel
+        fields = '__all__'
+
 
 class TicketSerializer(serializers.Serializer):
 
