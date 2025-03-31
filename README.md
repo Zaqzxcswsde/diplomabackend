@@ -1,8 +1,8 @@
 # General informaiton
 ## What is this?
-A backend for my diploma, a two-factor authentication app (moblie + backend + PC admin client).
+A backend for my diploma, a two-factor authentication app ([mobile app](https://github.com/Zaqzxcswsde/diplomamobile) + backend + [PC admin client](https://github.com/Zaqzxcswsde/diplomaadminpanel)).
 ## Status
-It is still in development, I may or may not write a proper README (and publish the client!) once its finished.
+Main featureset done, currently pushing updates to support latest version of admin panel.
 
 # Installation and usage
 ## Installation
