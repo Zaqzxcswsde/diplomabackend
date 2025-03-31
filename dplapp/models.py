@@ -48,6 +48,8 @@ class UsersModel(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     additional_data = models.TextField(blank=True, default="")
     last_login = models.DateTimeField(blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True) # 
+    
     @property
     def can_login(self):
 

@@ -29,7 +29,18 @@ import argon2.exceptions
 from django.db import transaction
 
 
+
+class UTCDateTimeField(serializers.DateTimeField):
+    def to_representation(self, value):
+        if value is not None:
+            # Приводим время к UTC, если оно timezone-aware
+            value = value.astimezone(datetime.timezone.utc)
+        return super().to_representation(value)
+
+
+
 class UserSerializer(serializers.ModelSerializer):
+    last_login = UTCDateTimeField(required = False, read_only=True)
     token = serializers.CharField(source='tokensmodel.pk', read_only=True)
     fingerprint = serializers.CharField(source='tokensmodel.fingerprint', read_only=True)
 
@@ -118,12 +129,6 @@ class TokenSerializer(serializers.ModelSerializer):
         # return None
 
 
-class UTCDateTimeField(serializers.DateTimeField):
-    def to_representation(self, value):
-        if value is not None:
-            # Приводим время к UTC, если оно timezone-aware
-            value = value.astimezone(datetime.timezone.utc)
-        return super().to_representation(value)
 
 
 class HistorySerializer(serializers.ModelSerializer):

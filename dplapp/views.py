@@ -29,6 +29,7 @@ from django.db.models.functions import Lower
 from dplapp.errors import ERRORS, SEARCHABLE_ERROR_CODES
 from django.db.models import Value
 from django.db.models.functions import Replace
+from dplapp.viewset_constants import UsersModelSettings
 
 import logging
 logger = logging.getLogger()
@@ -42,6 +43,13 @@ class SearchableErrorsView(APIView):
         filtered_errors = {x:ERRORS[x] for x in SEARCHABLE_ERROR_CODES}
 
         return Response(filtered_errors if include_keys else list(filtered_errors.values()))
+    
+
+class GetrUserOrdering(APIView):
+    permission_classes = [HasAdminPanelToken]
+
+    def get(self, request):
+        return Response({"default": UsersModelSettings.default_ordering, "choices": UsersModelSettings.ordering})
 
 
 class UserFilter(django_filters.FilterSet):
@@ -50,6 +58,7 @@ class UserFilter(django_filters.FilterSet):
         lookup_expr='isnull',
         exclude=True
     )
+
     class Meta:
         model = UsersModel
         fields = {
@@ -79,8 +88,8 @@ class UserViewSet(mixins.ListModelMixin,
         drf_filters.OrderingFilter,
     ]
 
-    ordering_fields = ['uuid, lastlogin']
-    ordering = ['-uuid']
+    ordering_fields = list(UsersModelSettings.ordering.keys())
+    ordering = UsersModelSettings.default_ordering
     search_fields = ['additional_data__iregex', 'tokensmodel__pubkey', 'tokensmodel__fingerprint', 'token_fingerprint_clean']
 
 
