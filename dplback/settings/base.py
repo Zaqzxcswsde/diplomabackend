@@ -169,7 +169,7 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
     'DEFAULT_METADATA_CLASS': None,
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'dplback.pagination.CustomPageNumberPagination',
     'PAGE_SIZE': 10,
 }
 

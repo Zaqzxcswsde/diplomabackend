@@ -131,6 +131,7 @@ class TokensModel(models.Model):
     user = models.OneToOneField(UsersModel, on_delete=models.SET_NULL, null=True, blank=True)
     pin = models.TextField()
     allowed_ips = models.TextField(blank=True, validators=[validate_ips], default=ReturnEmptyString)
+    fingerprint = models.CharField(max_length=17, editable=False, blank=True)
     # pin_salt = models.TextField()
 
 
@@ -145,22 +146,29 @@ class TokensModel(models.Model):
     #     self._pubkey = value
 
 
-    @property
-    @admin.display(description = 'Fingerprint')
-    def fingerprint(self):
-        cleaned_pubkey = re.sub(r'(\r\n)|\n', '', self.pubkey)
-        digest = hashlib.sha256(cleaned_pubkey.encode('utf-8')).digest()
-        # digest = hashlib.sha256(self.pubkey.encode('utf-8')).digest()
-        first_6_bytes = digest[:6]
-        return ' '.join(f'{byte:02X}' for byte in first_6_bytes)
+    # @property
+    # @admin.display(description = 'Fingerprint')
+    # def fingerprint(self):
+    #     cleaned_pubkey = re.sub(r'(\r\n)|\n', '', self.pubkey)
+    #     digest = hashlib.sha256(cleaned_pubkey.encode('utf-8')).digest()
+    #     first_6_bytes = digest[:6]
+    #     return ' '.join(f'{byte:02X}' for byte in first_6_bytes)
 
     def save(self, *args, **kwargs):
 
-        # if self.pubkey:
-        #     # Удаляем переносы строк из pubkey
-        #     self.pubkey = re.sub(r'(\r\n)|\n', '', self.pubkey)
-
         self.full_clean()
+
+        # print(f"started save, {self.pubkey=}, {self.fingerprint=}")
+        if self.pubkey:
+            # print("found pubkey")
+            cleaned_pubkey = re.sub(r'(\r\n)|\n', '', self.pubkey)
+            digest = hashlib.sha256(cleaned_pubkey.encode('utf-8')).digest()
+            first_6_bytes = digest[:6]
+            fingerprint = ' '.join(f'{byte:02X}' for byte in first_6_bytes)
+            # print(f"{fingerprint=}")
+            self.fingerprint = fingerprint
+            # print(f"{self.fingerprint=}")
+
         super(TokensModel, self).save(*args, **kwargs)
 
 
@@ -204,7 +212,6 @@ class AppSettingsModel(models.Model):
     public_key = models.TextField(blank=True)
     private_key = models.TextField(blank=True)
     ticket_encryption_key = models.BinaryField(blank=True, editable=True)
-
 
     def save(self, *args, **kwargs):
         self.full_clean()

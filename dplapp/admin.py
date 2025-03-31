@@ -19,9 +19,9 @@ from django.utils.html import format_html
 
 @admin.register(TokensModel)
 class TokenAdmin(admin.ModelAdmin):
-    list_display = ["__str__", 'fingerprint', 'is_active', 'user']
+    list_display = ["__str__", 'is_active', 'user', 'fingerprint'] # 
     list_editable = ['is_active', 'user']
-    readonly_fields = ['pubkey', 'pin', 'last_activated']
+    readonly_fields = ['pubkey', 'pin', 'last_activated', 'fingerprint'] #
     search_fields = ["pubkey"]
 
     def has_add_permission(self, request):

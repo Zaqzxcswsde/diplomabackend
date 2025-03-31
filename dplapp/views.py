@@ -1,51 +1,47 @@
-from time import sleep
-from django.shortcuts import render
-
 # Create your views here.
 
+from time import sleep
+from django.shortcuts import render
+from django.db.models import Q, F
+from rest_framework.filters import SearchFilter
 from rest_framework import mixins
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
 from dplapp.serializers import MainRequestSerializer, HistorySerializer
-
 from ipware import get_client_ip
-
 from dplapp.models import TokensModel, HistoryModel, UsersModel, AppSettingsModel
-
 from argon2 import PasswordHasher
-
 from django.utils import timezone
-
 from django.conf import settings
-
 from rest_framework import serializers
-
 from django.http import HttpResponseServerError
-
 from dplapp.serializers import TokenSerializer, FullHistorySerializer, UserSerializer
-
 from django.db import connection
-
 import django_filters.rest_framework as filters
-
 from dplapp.permissions import HasAdminPanelToken
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework import status
+from rest_framework import filters as drf_filters
+from django.core.exceptions import ObjectDoesNotExist
+import django_filters
+from django.db.models.functions import Lower
+from dplapp.errors import ERRORS, SEARCHABLE_ERROR_CODES
+from django.db.models import Value
+from django.db.models.functions import Replace
 
 import logging
 logger = logging.getLogger()
 
-from rest_framework import viewsets
 
-from rest_framework.decorators import action
+class SearchableErrorsView(APIView):
+    permission_classes = [HasAdminPanelToken]
 
-from rest_framework import status
+    def get(self, request):
+        include_keys = request.query_params.get("include_keys", "false").lower() == "true"
+        filtered_errors = {x:ERRORS[x] for x in SEARCHABLE_ERROR_CODES}
 
-from rest_framework import filters as drf_filters
-
-from django.core.exceptions import ObjectDoesNotExist
-
-import django_filters
+        return Response(filtered_errors if include_keys else list(filtered_errors.values()))
 
 
 class UserFilter(django_filters.FilterSet):
@@ -60,7 +56,6 @@ class UserFilter(django_filters.FilterSet):
             'last_login': ['lt', 'gt', 'exact']
         }
 
-
 class UserViewSet(mixins.ListModelMixin,
                   mixins.CreateModelMixin,
                   mixins.DestroyModelMixin,
@@ -70,6 +65,14 @@ class UserViewSet(mixins.ListModelMixin,
     filterset_class = UserFilter
     permission_classes = [HasAdminPanelToken]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            token_fingerprint_clean=Replace(F('tokensmodel__fingerprint'), Value(' '), Value(''))
+        )
+        return queryset
+
+
     filter_backends = [
         django_filters.rest_framework.DjangoFilterBackend,
         drf_filters.SearchFilter,
@@ -78,10 +81,23 @@ class UserViewSet(mixins.ListModelMixin,
 
     ordering_fields = ['uuid, lastlogin']
     ordering = ['-uuid']
-    search_fields = ['additional_data', 'tokensmodel__pubkey']
+    search_fields = ['additional_data__iregex', 'tokensmodel__pubkey', 'tokensmodel__fingerprint', 'token_fingerprint_clean']
 
 
 class HistoryFilter(django_filters.FilterSet):
+
+    result = django_filters.CharFilter(method='filter_result_icontains_or')
+
+    def filter_result_icontains_or(self, queryset, name, value):
+        terms = [v.strip() for v in value.split('|') if v.strip()]
+        if not terms:
+            return queryset
+        q = Q()
+        for term in terms:
+            q |= Q(**{f"{name}__icontains": term})
+        return queryset.filter(q)
+
+
     class Meta:
         model = HistoryModel
         fields = {
@@ -91,12 +107,18 @@ class HistoryFilter(django_filters.FilterSet):
             'ip': ['exact']
         }
 
-
 class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = HistoryModel.objects.all()
     serializer_class = FullHistorySerializer
     filterset_class = HistoryFilter
     permission_classes = [HasAdminPanelToken]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            token_fingerprint_clean=Replace(F('token__fingerprint'), Value(' '), Value(''))
+        )
+        return queryset
 
     filter_backends = [
         django_filters.rest_framework.DjangoFilterBackend,
@@ -105,9 +127,13 @@ class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     ]
     ordering_fields = ['datetime']
     ordering = ['-datetime']
-    search_fields = ['result', 'ip', 'token__user__additional_data']
-
-
+    search_fields = ['result',
+                     'ip',
+                     'token__user__additional_data__iregex',
+                     'token__pubkey',
+                     'token__id',
+                     'token__fingerprint',
+                     'token_fingerprint_clean']
 
 
 class UpdateEnforcingModeView(APIView):
@@ -142,13 +168,6 @@ class UpdateEnforcingModeView(APIView):
         return Response({"enforcing_mode": settings_obj.enforcing_mode}, status=200)
 
 
-
-
-
-
-
-
-
 class TokenFilter(filters.FilterSet):
     has_user = django_filters.BooleanFilter(
         field_name='user',
@@ -170,6 +189,14 @@ class TokenViewSet(
     # mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            fingerprint_clean=Replace('fingerprint', Value(' '), Value(''))
+        )
+        return queryset
+    
     queryset = TokensModel.objects.all()
     serializer_class = TokenSerializer
     filterset_class = TokenFilter
@@ -181,7 +208,7 @@ class TokenViewSet(
         drf_filters.SearchFilter,
         drf_filters.OrderingFilter,
     ]
-    search_fields = ['id', 'pubkey', 'user__uuid', 'user__additional_data']
+    search_fields = ['id', 'pubkey', 'user__uuid', 'user__additional_data__iregex', 'fingerprint', 'fingerprint_clean', 'allowed_ips']
     ordering_fields = ['last_activated', 'id']
     ordering = ['-id']
 
@@ -214,7 +241,6 @@ class TokenViewSet(
 
         return Response({'updated': updated}, status=200)
 
-
     @action(detail=False, methods=['delete'], url_path='delete-inactive')
     def delete_inactive(self, request):
         query = TokensModel.objects.filter(is_active=False)
@@ -235,16 +261,6 @@ class TokenViewSet(
         count = queryset.count()
         return Response({'count': count}, status=status.HTTP_200_OK)
 
-
-
-    # def update(self, request, *args, **kwargs):
-    #     # Полный PUT-запрос — запрещён
-    #     return Response({"detail": "PUT-запросы не поддерживаются."}, status=405)
-
-# class ChangeEnforsingModeView(APIView):
-#     def post(self, request, format=None):
-#         request.data
-#         pass
 
 class HealthCheckView(APIView):
 

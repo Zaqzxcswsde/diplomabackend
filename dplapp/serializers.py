@@ -12,6 +12,8 @@ from django.utils import timezone
 from datetime import timedelta
 from dplapp.models import TokensModel, AppSettingsModel, HistoryModel, UsersModel
 
+from dplapp.errors import ERRORS, ErrorCodes
+
 import jwt
 
 import json
@@ -29,6 +31,7 @@ from django.db import transaction
 
 class UserSerializer(serializers.ModelSerializer):
     token = serializers.CharField(source='tokensmodel.pk', read_only=True)
+    fingerprint = serializers.CharField(source='tokensmodel.fingerprint', read_only=True)
 
     class Meta:
         model = UsersModel
@@ -38,7 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
 class TokenSerializer(serializers.ModelSerializer):
 
     # user_uuid = serializers.UUIDField(source='user.uuid', read_only=True)
-    fingerprint = serializers.SerializerMethodField()
+    # fingerprint = serializers.SerializerMethodField()
     # user_additional_info = serializers.Te SerializerMethodField()
     user_additional_data = serializers.CharField(required=False, allow_blank=True) # , allow_null=True
 
@@ -49,10 +52,10 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = TokensModel
         fields = '__all__'
-        read_only_fields = ['pubkey', 'pin', 'last_activated'] # 'user_additional_data'
+        read_only_fields = ['pubkey', 'pin', 'last_activated', 'fingerprint'] # 'user_additional_data'
 
-    def get_fingerprint(self, obj):
-        return obj.fingerprint
+    # def get_fingerprint(self, obj):
+    #     return obj.fingerprint
 
     def to_internal_value(self, data : dict[str, str]):
 
@@ -130,7 +133,10 @@ class HistorySerializer(serializers.ModelSerializer):
         model = HistoryModel
         fields = ['datetime', 'ip', 'msg']
 
+
 class FullHistorySerializer(serializers.ModelSerializer):
+
+    fingerprint = serializers.CharField(source = "token.fingerprint", read_only=True)
     datetime = UTCDateTimeField()
 
     class Meta:
@@ -150,12 +156,12 @@ class TicketSerializer(serializers.Serializer):
 
         if not isinstance(data, dict):
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: "ticket data should be dict"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.DATA_SHOULD_BE_DICT]
             })
         
         if list(data.keys()) != ['ticket']:
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: "incorrect dictionary passed, keys() should be == ['ticket']"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.INCORRECT_DICT_KEYS_TICKET]
             })
         
         data = data['ticket']
@@ -166,26 +172,26 @@ class TicketSerializer(serializers.Serializer):
 
         except InvalidSignatureError as exc:
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: f"malformed JWT signature"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.MALFORMED_JWT_SIGNATURE]
             }) from exc
         except DecodeError as exc:
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: f"incorrect JWT token passed"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.INCORR_JWT_TICKET]
             }) from exc
         except InvalidToken as exc:
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: f"couldn't decrypt payload"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.COULDNT_DECRYPT]
             }) from exc
                 
         # in case exception hasn't been raised but funtion returned nothing
         if decrypted_obj is None:
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: "error in signature verification or in decryption"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.ERR_IN_SIG_OR_DEC]
             })
 
         if not isinstance(decrypted_obj, dict):
             raise serializers.ValidationError({
-                    api_settings.NON_FIELD_ERRORS_KEY: "decrypted data is not dict"
+                    api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.DEC_NOT_DICT]
             })
 
         return super().to_internal_value(decrypted_obj)
@@ -217,7 +223,7 @@ class TicketSerializer(serializers.Serializer):
         
 
         if data['version'] != settings.APP_VERSION and data['version'] not in settings.ALLOWED_VERSIONS:
-            raise serializers.ValidationError({"version": "unsupported ticket version"})
+            raise serializers.ValidationError({"version": ERRORS[ErrorCodes.UNSUP_VER_TICKET]})
 
         # if not token_exists and not sett.allow_new:
         #     raise serializers.ValidationError({
@@ -240,7 +246,7 @@ class TicketSerializer(serializers.Serializer):
             token.save()
 
             raise serializers.ValidationError({
-                'request_time': f"flow control error, token has been deactivated for security reasons, the incident has been logged"
+                'request_time': ERRORS[ErrorCodes.FLOW_CONTROL_ERROR]
                 })
 
         return data
@@ -260,10 +266,10 @@ class TicketSerializer(serializers.Serializer):
             raise ImproperlyConfigured("ticket_expiry_period missing! Run setup_app command")
         
         if timezone.now().astimezone(datetime.timezone.utc) - value.astimezone(datetime.timezone.utc) < timedelta():
-            raise serializers.ValidationError("ticket request time is in the future somehow")
+            raise serializers.ValidationError(ERRORS[ErrorCodes.REQ_TIME_FUTURE])
 
         if abs(timezone.now().astimezone(datetime.timezone.utc) - value.astimezone(datetime.timezone.utc)) > sett.ticket_expiry_period:
-            raise serializers.ValidationError("ticket has expired", 'expired')
+            raise serializers.ValidationError(ERRORS[ErrorCodes.TICKET_EXPIRED], 'expired')
 
         return value
 
@@ -275,7 +281,7 @@ class TicketSerializer(serializers.Serializer):
 
         if self.context.get("claimed_pubkey"):
             if self.context.get("claimed_pubkey") != value:
-                raise serializers.ValidationError("public_keys mismatch. Is that an old token?")
+                raise serializers.ValidationError(ERRORS[ErrorCodes.PUBKEYS_MISMATCH])
 
 
         token = None
@@ -287,13 +293,13 @@ class TicketSerializer(serializers.Serializer):
                 #     return value
 
                 raise serializers.ValidationError(
-                    detail="that token is not registered in the database, ticket",
+                    detail=ERRORS[ErrorCodes.UNREGISTERED_TICKET],
                     code='unregistered'
                 ) from exc
 
         if token and not token.is_active:
             raise serializers.ValidationError(
-                detail="that token is not active, ticket",
+                detail=ERRORS[ErrorCodes.INACTIVE_TICKET],
                 code='inactive'
             )
 
@@ -314,8 +320,6 @@ class TicketSerializer(serializers.Serializer):
         return value
     
 
-
-
 class MainRequestSerializer(serializers.Serializer):
 
 
@@ -334,7 +338,7 @@ class MainRequestSerializer(serializers.Serializer):
 
         # this check should be redundant because of the is_valid() call, but is here just in case
         if not token_exists and not AppSettingsModel.objects.get_or_create()[0].allow_new:
-            raise serializers.ValidationError("coulnt create token: new tokens are not allowed")
+            raise serializers.ValidationError(ERRORS[ErrorCodes.NEW_TKN_NOT_ALLOWED])
 
         if token_exists:
             token = TokensModel.objects.get(pubkey = validated_data['public_key'])
@@ -353,7 +357,7 @@ class MainRequestSerializer(serializers.Serializer):
         token_exists = TokensModel.objects.filter(pubkey = self.validated_data['public_key']).exists()
 
         if not token_exists:
-            raise serializers.ValidationError("coulnt create ticket: that token is not registered in the database")
+            raise serializers.ValidationError(ERRORS[ErrorCodes.CANNOT_CREATE_TICKET_UNREGISTERED])
 
         token = TokensModel.objects.get(pubkey = self.validated_data['public_key'])
 
@@ -377,12 +381,12 @@ class MainRequestSerializer(serializers.Serializer):
 
         if not isinstance(data, dict):
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: "token data should be dict"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.TKN_DATA_NOT_DICT]
             })
         
         if set(data.keys()) != set(['token']):
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: f"incorrect dictionary passed, keys should be == ['token'], found {data.keys()=}"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.INCORRECT_DICT_KEYS_TOKEN]
             })
         
         ip_from_data = self.context.get('ip')
@@ -392,7 +396,7 @@ class MainRequestSerializer(serializers.Serializer):
             claimed_payload : dict = jwt.decode(data, options={"verify_signature": False})
         except DecodeError as exc:
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: "incorrect JWT token passed"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.INCORR_JWT_TOKEN]
             }) from exc
 
         # logger.info()
@@ -404,12 +408,12 @@ class MainRequestSerializer(serializers.Serializer):
 
         if not set(claimed_payload.keys()) == (set(self.get_fields().keys()) - {'ip'}):
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: f"incorrect token keys, got {claimed_payload.keys()=}, but expected {self.fields.keys()=}"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.INCORR_TOKEN_KEYS] + "Got {claimed_payload.keys()=}, but expected {self.fields.keys()=}"
             })
         
         app_ver = settings.APP_VERSION
         if claimed_payload['version'] != app_ver:
-            raise serializers.ValidationError({"version" : "unsupported app version"})
+            raise serializers.ValidationError({"version" : ERRORS[ErrorCodes.UNSUP_APP_VERSION]})
 
 
         claimed_pubkey = claimed_payload['public_key']
@@ -418,14 +422,14 @@ class MainRequestSerializer(serializers.Serializer):
 
         if pubkey_validation_result:
             raise serializers.ValidationError({
-                'public_key': f"public_key is not in correct format: {pubkey_validation_result}"
+                'public_key': ERRORS[ErrorCodes.PUBKEY_INCORR_FMT] + pubkey_validation_result
             })
 
         try:
             jwt.decode(data, claimed_pubkey, algorithms=['RS256'])
         except InvalidSignatureError as exc:
             raise serializers.ValidationError({
-                api_settings.NON_FIELD_ERRORS_KEY: "malformed JWT signature"
+                api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.MALFORMED_JWT_SIGNATURE_TOKEN]
             }) from exc
 
 
@@ -474,11 +478,11 @@ class MainRequestSerializer(serializers.Serializer):
 
         if token and not data.get('ticket', None):
             raise serializers.ValidationError({
-                    'ticket': "ticket is required for existing tokens"
+                    'ticket': ERRORS[ErrorCodes.TICKET_IS_REQUIRED]
                 })
         elif not token and data.get('ticket', None):
             raise serializers.ValidationError({
-                    'ticket': "new tokens shouldn't have tickets"
+                    'ticket': ERRORS[ErrorCodes.NEW_TKN_SHOULDNT_TICKETS]
                 })
 
 
@@ -506,7 +510,7 @@ class MainRequestSerializer(serializers.Serializer):
 
             if not is_valid_ip_flag:
                 raise serializers.ValidationError({
-                    'ip': f"not a valid IP"
+                    'ip': ERRORS[ErrorCodes.NOT_A_VALID_IP]
                 })
 
 
@@ -522,7 +526,7 @@ class MainRequestSerializer(serializers.Serializer):
                         ph.verify(token.pin, data['pin'])
                     except argon2.exceptions.VerifyMismatchError as exc:
                         raise serializers.ValidationError({
-                            'pin': f"pin is invalid"
+                            'pin': ERRORS[ErrorCodes.PIN_IS_INVALID]
                         }) from exc
 
         return data
@@ -540,12 +544,12 @@ class MainRequestSerializer(serializers.Serializer):
         # logger.info(f"{value.astimezone(datetime.timezone.utc)=}")
 
         if timezone.now().astimezone(datetime.timezone.utc) - value.astimezone(datetime.timezone.utc) < -timedelta(seconds=3):
-            raise serializers.ValidationError("request_time is in the future, check time zones")
+            raise serializers.ValidationError(ERRORS[ErrorCodes.REQ_TIME_TOKEN_FUTURE])
 
         grace_period = timedelta(seconds=5)
 
         if abs(timezone.now().astimezone(datetime.timezone.utc) - value.astimezone(datetime.timezone.utc)) > grace_period:
-            raise serializers.ValidationError("request_time is too old, send new request", 'old')
+            raise serializers.ValidationError(ERRORS[ErrorCodes.REQ_TOO_OLD], 'old')
 
         return value
 
@@ -561,7 +565,7 @@ class MainRequestSerializer(serializers.Serializer):
         except ObjectDoesNotExist as exc:
             if not AppSettingsModel.objects.get_or_create()[0].allow_new:
                 raise serializers.ValidationError(
-                    detail="that token is not registered in the database, token",
+                    detail=ERRORS[ErrorCodes.TOKEN_IS_UNREGISTERED],
                     code='unregistered'
                 ) from exc
 
@@ -570,7 +574,7 @@ class MainRequestSerializer(serializers.Serializer):
 
         if token and not token.is_active:
             raise serializers.ValidationError(
-                detail="that token is not active, token",
+                detail=ERRORS[ErrorCodes.INACTIVE_TOKEN],
                 code='inactive'
             )
 
