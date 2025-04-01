@@ -39,7 +39,7 @@ def ReturnTrue():
     return True
 
 def ReturnFalse():
-    return True
+    return False
 
 def ReturnEmptyString():
     return ""
