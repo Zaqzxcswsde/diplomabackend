@@ -2,7 +2,7 @@
 ## What is this?
 A backend for my diploma, a two-factor authentication app ([mobile app](https://github.com/Zaqzxcswsde/diplomamobile) + [backend](https://github.com/Zaqzxcswsde/diplomabackend) + [PC admin client](https://github.com/Zaqzxcswsde/diplomaadminpanel)).
 ## Status
-Main featureset done, currently pushing updates to support latest version of admin panel.
+Done. Bugfixes from tests to come.
 
 # Installation and usage
 ## Installation
