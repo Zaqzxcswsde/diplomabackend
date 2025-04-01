@@ -184,6 +184,15 @@ class TokenFilter(filters.FilterSet):
         exclude=True 
     )
 
+    ids = filters.CharFilter(method='filter_by_ids')
+
+    def filter_by_ids(self, queryset, name, value):
+        try:
+            ids = [int(v) for v in value.split(',') if v.strip().isdigit()]
+            return queryset.filter(id__in=ids)
+        except ValueError:
+            return queryset.none()
+
     class Meta:
         model = TokensModel
         fields = {
