@@ -22,7 +22,7 @@ class TokenAdmin(admin.ModelAdmin):
     list_display = ["__str__", 'is_active', 'user', 'fingerprint'] # 
     list_editable = ['is_active', 'user']
     readonly_fields = ['pubkey', 'pin', 'last_activated', 'fingerprint'] #
-    search_fields = ["pubkey"]
+    search_fields = ["pubkey", "fingerprint"]
 
     def has_add_permission(self, request):
         return False
