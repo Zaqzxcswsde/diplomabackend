@@ -348,11 +348,13 @@ class MainRequestSerializer(serializers.Serializer):
         if token_exists:
             token = TokensModel.objects.get(pubkey = validated_data['public_key'])
         else:
-            token = TokensModel.objects.create(
+            token = TokensModel(
                 pubkey = validated_data['public_key'],
                 pin = PasswordHasher().hash(validated_data['pin']),
-                is_active = False
+                is_active = False,
+                can_reset_password = True
                 )
+            token.save()
 
         return token
 
