@@ -52,8 +52,8 @@ jobs:
       - name: Start container
         run: |
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
-          export DJANGO_SETTINGS_MODULE=dplback.settings.prod
-          export ALLOWED_EXTERNAL_IPS=$ALLOWED_EXTERNAL_IPS
+          export DJANGO_SETTINGS_MODULE='dplback.settings.prod' && \
+          export ALLOWED_EXTERNAL_IPS='${ALLOWED_EXTERNAL_IPS}' && \
           docker compose -f $DEPLOY_PATH/docker-compose.yml up -d
           "
 
@@ -78,7 +78,9 @@ jobs:
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
             echo '[INFO] Validating environment (DJANGO_SETTINGS_MODULE)...'
             ENV_MODE=\$(docker exec $CONTAINER_NAME printenv DJANGO_SETTINGS_MODULE)
+            ALLOWED_IPS=\$(docker exec $CONTAINER_NAME printenv ALLOWED_EXTERNAL_IPS)
             echo \"[INFO] DJANGO_SETTINGS_MODULE=\$ENV_MODE\"
+            echo \"[INFO] ALLOWED_EXTERNAL_IPS=\$ALLOWED_IPS\"
 
             if [ \"\$ENV_MODE\" != \"dplback.settings.prod\" ]; then
               echo '[ERROR] Server is NOT running in production mode!'
