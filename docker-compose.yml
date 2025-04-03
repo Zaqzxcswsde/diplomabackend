@@ -11,3 +11,4 @@ services:
     restart: always
     environment:
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-dplback.settings.dev}
+      - ALLOWED_EXTERNAL_IPS=${ALLOWED_EXTERNAL_IPS:-""}
