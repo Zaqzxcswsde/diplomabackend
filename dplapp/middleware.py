@@ -44,9 +44,10 @@ class RestrictIPMiddleware:
 
         client_ip, is_routable = get_client_ip(request)
 
-        logger.warning(f"{client_ip}, {is_routable}, {ALLOWED_EXTERNAL_IPS}, {_raw}")
+        # logger.warning(f"{client_ip}, {is_routable}, {ALLOWED_EXTERNAL_IPS}, {_raw}")
 
-        if (any(path.startswith(p) for p in ALLOWED_OPEN_PATHS)
+        if (path == '/'
+            or any(path.startswith(p) for p in ALLOWED_OPEN_PATHS if p != '/')
             or is_routable == False):
             return self.get_response(request)
 
