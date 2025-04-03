@@ -11,6 +11,7 @@ env:
   USERNAME: ${{ vars.USERNAME }}
   DEPLOY_PATH: /home/user/dplfld/diplomabackend/
   CONTAINER_NAME: diplomabackend
+  ALLOWED_EXTERNAL_IPS: ${{ secrets.ALLOWED_EXTERNAL_IPS }}
 
 
 jobs:
@@ -52,6 +53,7 @@ jobs:
         run: |
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
           export DJANGO_SETTINGS_MODULE=dplback.settings.prod
+          export ALLOWED_EXTERNAL_IPS=$ALLOWED_EXTERNAL_IPS
           docker compose -f $DEPLOY_PATH/docker-compose.yml up -d
           "
 

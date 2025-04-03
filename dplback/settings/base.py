@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'dplapp.middleware.BlockPasswordChangeMiddleware',
+    'dplapp.middleware.RestrictIPMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
