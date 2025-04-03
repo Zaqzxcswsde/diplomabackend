@@ -60,6 +60,7 @@ jobs:
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
           export DJANGO_SETTINGS_MODULE='dplback.settings.prod' && \
           export ALLOWED_EXTERNAL_IPS='${ALLOWED_EXTERNAL_IPS}' && \
+          echo "ALLOWED_EXTERNAL_IPS2=\$ALLOWED_EXTERNAL_IPS"
           docker compose -f $DEPLOY_PATH/docker-compose.yml up -d
           "
 
