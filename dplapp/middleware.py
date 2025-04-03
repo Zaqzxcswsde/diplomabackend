@@ -8,6 +8,9 @@ from django.http import HttpResponseForbidden
 
 import os
 
+import logging
+logger = logging.getLogger()
+
 class BlockPasswordChangeMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -31,7 +34,6 @@ ALLOWED_OPEN_PATHS = [
 _raw = os.environ.get("ALLOWED_EXTERNAL_IPS", "")
 ALLOWED_EXTERNAL_IPS = [ip.strip() for ip in _raw.split(",") if ip.strip()]
 
-
 class RestrictIPMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -40,6 +42,8 @@ class RestrictIPMiddleware:
         path = request.path
 
         client_ip, is_routable = get_client_ip(request)
+
+        logger.warning(client_ip, is_routable, ALLOWED_EXTERNAL_IPS, _raw)
 
         if (any(path.startswith(p) for p in ALLOWED_OPEN_PATHS)
             or is_routable == False):
