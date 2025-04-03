@@ -11,7 +11,7 @@ env:
   USERNAME: ${{ vars.USERNAME }}
   DEPLOY_PATH: /home/user/dplfld/diplomabackend/
   CONTAINER_NAME: diplomabackend
-  ALLOWED_EXTERNAL_IPS: ${{ secrets.ALLOWED_EXTERNAL_IPS }}
+  ALLOWED_EXTERNAL_IPS: ${{ vars.ALLOWED_EXTERNAL_IPS }}
 
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
 
       - name: Debug env
         run:
-          echo "ALLOWED_EXTERNAL_IPS=${{ secrets.ALLOWED_EXTERNAL_IPS }}"
+          echo "ALLOWED_EXTERNAL_IPS=${{ vars.ALLOWED_EXTERNAL_IPS }}"
           echo "ALLOWED_EXTERNAL_IPS2=$ALLOWED_EXTERNAL_IPS"
 
 
