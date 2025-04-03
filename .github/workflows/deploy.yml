@@ -49,6 +49,12 @@ jobs:
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "docker compose -f $DEPLOY_PATH/docker-compose.yml build"
 
 
+      - name: Debug env
+        run:
+          echo "ALLOWED_EXTERNAL_IPS=${{ secrets.ALLOWED_EXTERNAL_IPS }}"
+          echo "ALLOWED_EXTERNAL_IPS2=$ALLOWED_EXTERNAL_IPS"
+
+
       - name: Start container
         run: |
           ssh -p $SSH_PORT $USERNAME@$SERVER_URL "
