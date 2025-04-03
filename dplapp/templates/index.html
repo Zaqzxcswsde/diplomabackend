@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Diplomabackend</title>
+</head>
+<body>
+    <h1>Hi!</h1>
+    Thanks for checking out my website :)
+    <h1>What is this?</h1>
+    This server hosts a backend for my diploma, an open-source two factor authentication app.
+    </br></br>
+    It consists of three parts:
+    <ul>
+        <li>
+            <a href="https://github.com/Zaqzxcswsde/diplomabackend">a backend</a>
+        </li>
+        <li>
+            <a href="https://github.com/Zaqzxcswsde/diplomamobile">a mobile app</a>
+        </li>
+        <li>
+            <a href="https://github.com/Zaqzxcswsde/diplomaadminpanel">a PC admin client</a>
+        </li>
+    </ul>
+    You can check the healthstate of the server by visiting <a href="{% url 'health' %}">this link</a>.
+    <h1>Usage</h1>
+    Since this server is just a backend, its useless on its own, you will need to use a client emulator.
+    <br>
+    You can download one from the repository or just use it through
+    <a href="https://colab.research.google.com/drive/1eArXthgk2sa4-zvPe9w2pnX2LQa4o_Sp">Google Colab</a>.
+    <br><br>
+    Unfortunately, the system doesn't accept new tokens by default (and you need admin access to thange that :),
+    <br>so you will get an error telling you that your newly created token is not registered in the database.
+    <br><br>
+    In order to pass further, you would need to create your own instance of the backend.
+    <br>
+    Fortunately, it can be done with just a couple of commands, just follow
+    <a href="https://github.com/Zaqzxcswsde/diplomabackend?tab=readme-ov-file#as-a-test-run">the guide</a>
+    in the README of the repository.
+    <br><br>
+    Good luck!
+</body>
+</html>

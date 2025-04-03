@@ -35,6 +35,10 @@ import logging
 logger = logging.getLogger()
 
 
+def root_page(request):
+    return render(request, 'index.html')
+
+
 class SearchableErrorsView(APIView):
     permission_classes = [HasAdminPanelToken]
 
