@@ -29,6 +29,7 @@ class BlockPasswordChangeMiddleware:
 ALLOWED_OPEN_PATHS = [
     '/mainrequest/',
     '/health/',
+    '/'
 ]
 
 _raw = os.environ.get("ALLOWED_EXTERNAL_IPS", "")
