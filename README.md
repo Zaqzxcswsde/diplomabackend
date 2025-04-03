@@ -10,7 +10,7 @@ I was experimenting with proper DevOps and CI/CD with this one, so the installat
 ### As a test run
 0. Install docker (if its not already installed)
    - Run `docker version` and `docker compose version` to check.\
-If you get a proper output (starting with something like `Client: Docker Engine...` and `Docker Compose version...` respectively), then you already have them install and <ins>can skip this stage</ins>\
+If you get a proper output (starting with something like `Client: Docker Engine...` and `Docker Compose version...` respectively), then you already have them installed and <ins>can skip this stage</ins>\
 Otherwise, run
      - `curl -fsSL https://get.docker.com | sudo sh` # to run the automatic docker + compose installation script
      - `sudo usermod -aG docker $USER` # to add current user to the *docker* group so you wouln't have to run it with sudo
