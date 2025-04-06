@@ -411,12 +411,13 @@ class MainRequestSerializer(serializers.Serializer):
 
         # field_names = [self.get_fields().keys())
 
-        self.context['public_key'] = claimed_payload['public_key']
 
         if not set(claimed_payload.keys()) == (set(self.get_fields().keys()) - {'ip'}):
             raise serializers.ValidationError({
                 api_settings.NON_FIELD_ERRORS_KEY: ERRORS[ErrorCodes.INCORR_TOKEN_KEYS] + "Got {claimed_payload.keys()=}, but expected {self.fields.keys()=}"
             })
+        
+        self.context['public_key'] = claimed_payload['public_key']
         
         app_ver = settings.APP_VERSION
         if claimed_payload['version'] != app_ver:
