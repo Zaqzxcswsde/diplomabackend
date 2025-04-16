@@ -336,7 +336,7 @@ class MainRequestView(APIView):
                 token = TokensModel.objects.filter(pubkey = serializer.context.get('public_key', None)).first(),
                 initial_data = serializer.initial_data,
                 ip = client_ip,
-                result = {k:[str(x) for x in v] if v is list else str(v) for k,v in serializer.errors.items()},
+                result = {k:[str(x) for x in v] if isinstance(v, list) else str(v) for k,v in serializer.errors.items()},
                 msg = "ERR",
             )
 
