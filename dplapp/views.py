@@ -49,7 +49,7 @@ class SearchableErrorsView(APIView):
         return Response(filtered_errors if include_keys else list(filtered_errors.values()))
     
 
-class GetrUserOrdering(APIView):
+class GetUserOrdering(APIView):
     permission_classes = [HasAdminPanelToken]
 
     def get(self, request):
@@ -301,7 +301,7 @@ class HealthCheckView(APIView):
         if not err_details:
             return Response({"status": "ok"}, status=200)
         else:
-            return Response({"status": "error", "details": str(e)}, status=500)
+            return Response({"status": "error", "details": str(err_details)}, status=500)
 
 
 class CanLoginView(APIView):

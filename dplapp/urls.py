@@ -18,7 +18,7 @@ urlpatterns = [
     path('health/', views.HealthCheckView.as_view(), name = "health"),
     path('enforcing-mode/', views.UpdateEnforcingModeView.as_view()),
     path('errors/', views.SearchableErrorsView.as_view()),
-    path('ordering/user/', views.GetrUserOrdering.as_view())
+    path('ordering/user/', views.GetUserOrdering.as_view())
 ]
 
 urlpatterns += router.urls
