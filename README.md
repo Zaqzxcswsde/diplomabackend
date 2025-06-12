@@ -2,7 +2,7 @@
 ## What is this?
 A backend for my diploma, a two-factor authentication app ([mobile app](https://github.com/Zaqzxcswsde/diplomamobile) + [backend](https://github.com/Zaqzxcswsde/diplomabackend) + [PC admin client](https://github.com/Zaqzxcswsde/diplomaadminpanel)).\
 Api specification (without comments) can be found through [this link](https://b5mfc0szys.apidog.io).\
-A writeup with technical breakdown is avaliable [here](docs/writeup.pdf).
+A write-up with technical breakdown is available [here](docs/writeup.pdf).
 ## Status
 Done. Bugfixes from tests to come.
 
